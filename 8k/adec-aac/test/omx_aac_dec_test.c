@@ -359,8 +359,8 @@ if(pcmplayback && pBuffer->nFilledLen)
        DEBUG_PRINT(" FBD EOS REACHED...........\n");
        bOutputEosReached = true;
        event_complete();
-    return OMX_ErrorNone;
 }
+    return OMX_ErrorNone;
 }
 
 
