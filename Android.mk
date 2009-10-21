@@ -25,10 +25,10 @@
 #OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 #ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #--------------------------------------------------------------------------
-LOCAL_PATH := $(call my-dir)
 
+OMX_AUDIO_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 ifdef BOARD_USES_QCOM_8x_CHIPSET
-    include vendor/qcom-opensource/omx/mm-audio/8k/Android.mk
+    include $(OMX_AUDIO_PATH)/8k/Android.mk
 endif
