@@ -1217,15 +1217,37 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 }
             } else if (OMX_StateExecuting == eState)
             {
-                struct msm_audio_config drv_config;
-                DEBUG_PRINT("configure Driver for AAC Encoding " \
-                    "sample rate = %d \n",m_aac_param.nSampleRate);
-                ioctl(m_drv_fd, AUDIO_GET_CONFIG, &drv_config);
-                drv_config.sample_rate = m_aac_param.nSampleRate;
-                drv_config.channel_count = m_aac_param.nChannels;
-                drv_config.type = 1;   // AAC encoding
-                ioctl(m_drv_fd, AUDIO_SET_CONFIG, &drv_config);
-                ioctl(m_drv_fd, AUDIO_START, 0);
+                struct msm_audio_aac_enc_config drv_aac_enc_config;
+                struct msm_audio_stream_config drv_stream_config;
+
+                if(ioctl(m_drv_fd, AUDIO_GET_STREAM_CONFIG, &drv_stream_config) == -1)
+                {
+                    DEBUG_PRINT("ioctl AUDIO_GET_STREAM_CONFIG failed, errno[%d]\n", errno);
+                }
+                drv_stream_config.buffer_size  = OMX_AAC_OUTPUT_BUFFER_SIZE;
+                drv_stream_config.buffer_count = OMX_CORE_NUM_OUTPUT_BUFFERS;
+                if(ioctl(m_drv_fd, AUDIO_SET_STREAM_CONFIG, &drv_stream_config) == -1)
+                {
+                    DEBUG_PRINT("ioctl AUDIO_SET_STREAM_CONFIG failed, errno[%d]\n", errno);
+                }
+
+                if(ioctl(m_drv_fd, AUDIO_GET_AAC_ENC_CONFIG, &drv_aac_enc_config) == -1)
+                {
+                    DEBUG_PRINT("ioctl AUDIO_GET_AAC_ENC_CONFIG failed, errno[%d]\n", errno);
+                }
+                drv_aac_enc_config.channels = m_aac_param.nChannels;
+                drv_aac_enc_config.sample_rate = m_aac_param.nSampleRate;
+                drv_aac_enc_config.bit_rate =  m_aac_param.nBitRate;
+                if(ioctl(m_drv_fd, AUDIO_SET_AAC_ENC_CONFIG, &drv_aac_enc_config) == -1)
+                {
+                    DEBUG_PRINT("ioctl AUDIO_SET_AAC_ENC_CONFIG failed, errno[%d]\n", errno);
+                }
+
+                if(ioctl(m_drv_fd, AUDIO_START, 0) == -1)
+                {
+                    DEBUG_PRINT("ioctl AUDIO_START failed, errno[%d]\n", errno);
+                }
+
                 DEBUG_PRINT("SCP-->Idle to Executing\n");
             } else if (eState == OMX_StateIdle)
             {

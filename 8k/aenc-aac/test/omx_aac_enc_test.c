@@ -109,6 +109,7 @@ volatile int event_is_done = 0;
 const char *out_filename;
 uint32_t samplerate = 16000;
 uint32_t channels = 2;
+uint32_t bitrate = 32000;
 uint32_t pcmplayback = 0;
 uint32_t tunnel      = 0;
 unsigned to_idle_transition = 0;
@@ -321,12 +322,13 @@ int main(int argc, char **argv)
     pthread_cond_init(&cond, 0);
     pthread_mutex_init(&lock, 0);
 
-    if (argc >= 6) {
+    if (argc >= 7) {
         out_filename = argv[1];
         samplerate = atoi(argv[2]);
         channels = atoi(argv[3]);
         pcmplayback = atoi(argv[4]);
         tunnel  = atoi(argv[5]);
+        bitrate = atoi(argv[6]);
         if (tunnel == 1) {
             pcmplayback = 0; /* This feature holds good only for non tunnel mode*/
         }
@@ -337,9 +339,10 @@ int main(int argc, char **argv)
         }
     } else {
         DEBUG_PRINT(" invalid format: \n");
-        DEBUG_PRINT("ex: ./mm-aenc-omxaac AAC_OUTPUTFILE SAMPFREQ CHANNEL PCMPLAYBACK TUNNEL\n");
+        DEBUG_PRINT("ex: ./mm-aenc-omxaac AAC_OUTPUTFILE SAMPFREQ CHANNEL PCMPLAYBACK TUNNEL BITRATE\n");
         DEBUG_PRINT( "TUNNEL = 1 (ENCODED AAC SAMPLES WRITEN TO AAC_OUTPUTFILE)\n");
         DEBUG_PRINT( "NOTE: NON-TUNNEL & PCMPLAYBACK MODE NOT SUPPORTED: TBD : \n");
+        DEBUG_PRINT( "BITRATE in bits/sec \n");
         return 0;
     }
 
@@ -548,7 +551,7 @@ int Rec_Encoder()
 
     aacparam.nPortIndex   =  0;
     aacparam.nChannels    =  channels; //2 ; /* 1-> mono 2-> stereo*/
-    aacparam.nBitRate     =  samplerate;
+    aacparam.nBitRate     =  bitrate;
     aacparam.nSampleRate  =  samplerate;
     aacparam.eChannelMode =  OMX_AUDIO_ChannelModeStereo;
     aacparam.eAACStreamFormat    =  OMX_AUDIO_AACStreamFormatMP2ADTS;

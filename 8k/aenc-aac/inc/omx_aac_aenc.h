@@ -25,6 +25,8 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------*/
+#ifndef _AAC_ENC_H_
+#define _AAC_ENC_H_
 /*============================================================================
                     Audio Encoder
 
@@ -45,6 +47,7 @@ This module contains the class definition for openMAX encoder component.
 #include <unistd.h>
 #include <semaphore.h>
 #include <linux/msm_audio.h>
+#include <linux/msm_audio_aac.h>
 #include "OMX_Core.h"
 #include "OMX_Audio.h"
 #include "aenc_svr.h"
@@ -458,9 +461,4 @@ private:
 
     void flush_ack();
 };
-
-
-
-
-
-
+#endif //_AAC_ENC_H_
