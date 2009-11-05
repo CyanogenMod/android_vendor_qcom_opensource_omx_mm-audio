@@ -29,6 +29,6 @@
 OMX_AUDIO_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-ifdef BOARD_USES_QCOM_8x_CHIPSET
+ifeq ($(TARGET_BOARD_PLATFORM), qsd8k)
     include $(OMX_AUDIO_PATH)/8k/Android.mk
 endif
