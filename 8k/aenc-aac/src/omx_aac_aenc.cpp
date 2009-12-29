@@ -950,6 +950,8 @@ OMX_ERRORTYPE omx_aac_aenc::component_init(OMX_STRING role)
     is_out_th_sleep= false;
     is_in_th_sleep=false;
     m_idle_transition = 0;
+    m_out_act_buf_count = OMX_CORE_NUM_OUTPUT_BUFFERS;
+    output_buffer_size = OMX_AAC_OUTPUT_BUFFER_SIZE;
 
     m_comp_deinit=0;
     memset(&m_priority_mgm, 0, sizeof(m_priority_mgm));
@@ -1224,8 +1226,8 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 {
                     DEBUG_PRINT("ioctl AUDIO_GET_STREAM_CONFIG failed, errno[%d]\n", errno);
                 }
-                drv_stream_config.buffer_size  = OMX_AAC_OUTPUT_BUFFER_SIZE;
-                drv_stream_config.buffer_count = OMX_CORE_NUM_OUTPUT_BUFFERS;
+                drv_stream_config.buffer_size  = output_buffer_size;
+                drv_stream_config.buffer_count = m_out_act_buf_count;
                 if(ioctl(m_drv_fd, AUDIO_SET_STREAM_CONFIG, &drv_stream_config) == -1)
                 {
                     DEBUG_PRINT("ioctl AUDIO_SET_STREAM_CONFIG failed, errno[%d]\n", errno);
@@ -2248,9 +2250,8 @@ OMX_ERRORTYPE  omx_aac_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 portDefn->bEnabled   = m_out_bEnabled;
                 portDefn->bPopulated = m_out_bPopulated;
                 portDefn->nBufferCountActual = m_out_act_buf_count;
-                portDefn->nBufferCountMin    = OMX_CORE_NUM_OUTPUT_BUFFERS;
-                portDefn->nBufferSize        = OMX_AAC_OUTPUT_BUFFER_SIZE;
-                output_buffer_size   = OMX_AAC_OUTPUT_BUFFER_SIZE;
+                portDefn->nBufferCountMin    = m_out_act_buf_count;
+                portDefn->nBufferSize        = output_buffer_size;
                 portDefn->format.audio.bFlagErrorConcealment = OMX_TRUE;
                 portDefn->format.audio.eEncoding = OMX_AUDIO_CodingAAC;
                 portDefn->format.audio.pNativeRender = 0;

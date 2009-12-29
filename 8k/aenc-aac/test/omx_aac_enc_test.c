@@ -66,7 +66,6 @@ void Release_Encoder();
 
 #define SAMPLE_RATE 48000
 #define STEREO      2
-
 #define CONFIG_VERSION_SIZE(param) \
     param.nVersion.nVersion = CURRENT_OMX_SPEC_VERSION;\
     param.nSize = sizeof(param);
@@ -546,7 +545,9 @@ int Rec_Encoder()
         DEBUG_PRINT ("\nEnc: Expect Output Port\n");
         return -1;
     }
-
+    outputportFmt.nBufferSize = outputportFmt.nBufferSize;
+    outputportFmt.nBufferCountMin = outputportFmt.nBufferCountMin;
+    OMX_SetParameter(aac_enc_handle,OMX_IndexParamPortDefinition,&outputportFmt);
     CONFIG_VERSION_SIZE(aacparam);
 
     aacparam.nPortIndex   =  0;
