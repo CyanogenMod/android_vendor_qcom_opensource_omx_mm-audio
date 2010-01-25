@@ -39,10 +39,8 @@ CPPFLAGS += $(QCT_CPPFLAGS)
 CPPFLAGS += -g
 CPPFALGS += -D_DEBUG
 CPPFLAGS += -I$(LOCAL_DIR)/inc
-CPPFLAGS += -I$(SYSROOT_INC)/omx-mm-core
+CPPFLAGS += -I$(SRCDIR)/../mm-core/omxcore/inc
 CPPFLAGS += -I$(KERNEL_DIR)/include
-CPPFLAGS += -I$(KERNEL_OBJDIR)/include
-CPPFLAGS += -I$(KERNEL_OBJDIR)/include2
 CPPFLAGS += -I$(KERNEL_DIR)/arch/arm/include
 
 #-----------------------------------------------------------------------------
@@ -55,19 +53,19 @@ vpath %.cpp $(LOCAL_DIR)/src
 SRCS := omx_aac_aenc.cpp
 SRCS += aenc_svr.c
 
-all: libmm-aenc-omxaac.so.$(LIBVER)
+all: libOmxAacEnc.so.$(LIBVER)
 
 MM_AENC_OMXAAC_LDLIBS := -lpthread
 MM_AENC_OMXAAC_LDLIBS += -lstdc++
 
-libmm-aenc-omxaac.so.$(LIBVER): $(SRCS)
-	$(CC) $(CPPFLAGS) $(QCT_CFLAGS_SO) $(QCT_LDFLAGS_SO) -Wl,-soname,libmm-aenc-omxaac.so.$(LIBMAJOR) -o $@ $^ $(MM_AENC_OMXAAC_LDLIBS)
+libOmxAacEnc.so.$(LIBVER): $(SRCS)
+	$(CC) $(CPPFLAGS) $(QCT_CFLAGS_SO) $(QCT_LDFLAGS_SO) -Wl,-soname,libOmxAacEnc.so.$(LIBMAJOR) -o $@ $^ $(MM_AENC_OMXAAC_LDLIBS)
 
 #-----------------------------------------------------------------------------
 #             Make the apps-test (mm-aenc-omxaac-test)
 #-----------------------------------------------------------------------------
 
-mm-aenc-omxaac-test: libmm-aenc-omxaac.so.$(LIBVER)
+mm-aenc-omxaac-test: libOmxAacEnc.so.$(LIBVER)
 
 all: mm-aenc-omxaac-test
 
@@ -75,7 +73,7 @@ vpath %.c $(LOCAL_DIR)/test
 
 MM_AENC_AAC_TEST_LDLIBS := -lpthread
 MM_AENC_AAC_TEST_LDLIBS += -ldl
-MM_AENC_AAC_TEST_LDLIBS += libmm-aenc-omxaac.so.$(LIBVER)
+MM_AENC_AAC_TEST_LDLIBS += libOmxAacEnc.so.$(LIBVER)
 MM_AENC_AAC_TEST_LDLIBS += $(SYSROOT_DIR)/libmm-omxcore.so
 
 TEST_SRCS := omx_aac_enc_test.c

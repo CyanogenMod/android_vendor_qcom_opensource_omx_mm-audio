@@ -39,10 +39,8 @@ CPPFLAGS += $(QCT_CPPFLAGS)
 CPPFLAGS += -g
 CPPFALGS += -D_DEBUG
 CPPFLAGS += -I$(LOCAL_DIR)/inc
-CPPFLAGS += -I$(SYSROOT_INC)/omx-mm-core
+CPPFLAGS += -I$(SRCDIR)/../mm-core/omxcore/inc
 CPPFLAGS += -I$(KERNEL_DIR)/include
-CPPFLAGS += -I$(KERNEL_OBJDIR)/include
-CPPFLAGS += -I$(KERNEL_OBJDIR)/include2
 
 #-----------------------------------------------------------------------------
 #             Make the Shared library
@@ -54,19 +52,19 @@ vpath %.cpp $(LOCAL_DIR)/src
 SRCS := omx_aac_adec.cpp
 SRCS += adec_svr.c
 
-all: libmm-adec-omxaac.so.$(LIBVER)
+all: libOmxAacDec.so.$(LIBVER)
 
 MM_ADEC_OMXAAC_LDLIBS := -lpthread
 MM_ADEC_OMXAAC_LDLIBS += -lstdc++
 
-libmm-adec-omxaac.so.$(LIBVER): $(SRCS)
-	$(CC) $(CPPFLAGS) $(QCT_CFLAGS_SO) $(QCT_LDFLAGS_SO) -Wl,-soname,libmm-adec-omxaac.so.$(LIBMAJOR) -o $@ $^ $(MM_ADEC_OMXAAC_LDLIBS)
+libOmxAacDec.so.$(LIBVER): $(SRCS)
+	$(CC) $(CPPFLAGS) $(QCT_CFLAGS_SO) $(QCT_LDFLAGS_SO) -Wl,-soname,libOmxAacDec.so.$(LIBMAJOR) -o $@ $^ $(MM_ADEC_OMXAAC_LDLIBS)
 
 #-----------------------------------------------------------------------------
 #             Make the apps-test (mm-adec-omxaac-test)
 #-----------------------------------------------------------------------------
 
-mm-adec-omxaac-test: libmm-adec-omxaac.so.$(LIBVER)
+mm-adec-omxaac-test: libOmxAacDec.so.$(LIBVER)
 
 all: mm-adec-omxaac-test
 
@@ -74,7 +72,7 @@ vpath %.c $(LOCAL_DIR)/test
 
 MM_ADEC_AAC_TEST_LDLIBS := -lpthread
 MM_ADEC_AAC_TEST_LDLIBS += -ldl
-MM_ADEC_AAC_TEST_LDLIBS += libmm-adec-omxaac.so.$(LIBVER)
+MM_ADEC_AAC_TEST_LDLIBS += libOmxAacDec.so.$(LIBVER)
 MM_ADEC_AAC_TEST_LDLIBS += $(SYSROOT_DIR)/libmm-omxcore.so
 
 TEST_SRCS := omx_aac_dec_test.c

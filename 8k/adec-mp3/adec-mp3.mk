@@ -39,10 +39,8 @@ CPPFLAGS += $(QCT_CPPFLAGS)
 CPPFLAGS += -g
 CPPFALGS += -D_DEBUG
 CPPFLAGS += -I$(LOCAL_DIR)/inc
-CPPFLAGS += -I$(SYSROOT_INC)/omx-mm-core
+CPPFLAGS += -I$(SRCDIR)/../mm-core/omxcore/inc
 CPPFLAGS += -I$(KERNEL_DIR)/include
-CPPFLAGS += -I$(KERNEL_OBJDIR)/include
-CPPFLAGS += -I$(KERNEL_OBJDIR)/include2
 
 #-----------------------------------------------------------------------------
 #             Make the Shared library
@@ -54,19 +52,19 @@ vpath %.cpp $(LOCAL_DIR)/src
 SRCS := omx_mp3_adec.cpp
 SRCS += adec_svr.c
 
-all: libmm-adec-omxmp3.so.$(LIBVER)
+all: libOmxMp3Dec.so.$(LIBVER)
 
 MM_ADEC_OMXMP3_LDLIBS := -lpthread
 MM_ADEC_OMXMP3_LDLIBS += -lstdc++
 
-libmm-adec-omxmp3.so.$(LIBVER): $(SRCS)
-	$(CC) $(CPPFLAGS) $(QCT_CFLAGS_SO) $(QCT_LDFLAGS_SO) -Wl,-soname,libmm-adec-omxmp3.so.$(LIBMAJOR) -o $@ $^ $(MM_ADEC_OMXMP3_LDLIBS)
+libOmxMp3Dec.so.$(LIBVER): $(SRCS)
+	$(CC) $(CPPFLAGS) $(QCT_CFLAGS_SO) $(QCT_LDFLAGS_SO) -Wl,-soname,libOmxMp3Dec.so.$(LIBMAJOR) -o $@ $^ $(MM_ADEC_OMXMP3_LDLIBS)
 
 #-----------------------------------------------------------------------------
 #             Make the apps-test (mm-adec-omxmp3-test)
 #-----------------------------------------------------------------------------
 
-mm-adec-omxmp3-test: libmm-adec-omxmp3.so.$(LIBVER)
+mm-adec-omxmp3-test: libOmxMp3Dec.so.$(LIBVER)
 
 all: mm-adec-omxmp3-test
 
@@ -74,7 +72,7 @@ vpath %.c $(LOCAL_DIR)/test
 
 MM_ADEC_MP3_TEST_LDLIBS := -lpthread
 MM_ADEC_MP3_TEST_LDLIBS += -ldl
-MM_ADEC_MP3_TEST_LDLIBS += libmm-adec-omxmp3.so.$(LIBVER)
+MM_ADEC_MP3_TEST_LDLIBS += libOmxMp3Dec.so.$(LIBVER)
 MM_ADEC_MP3_TEST_LDLIBS += $(SYSROOT_DIR)/libmm-omxcore.so
 
 TEST_SRCS := omx_mp3_dec_test.c
