@@ -73,7 +73,7 @@ vpath %.c $(LOCAL_DIR)/test
 MM_ADEC_MP3_TEST_LDLIBS := -lpthread
 MM_ADEC_MP3_TEST_LDLIBS += -ldl
 MM_ADEC_MP3_TEST_LDLIBS += libOmxMp3Dec.so.$(LIBVER)
-MM_ADEC_MP3_TEST_LDLIBS += $(SYSROOT_DIR)/libmm-omxcore.so
+MM_ADEC_MP3_TEST_LDLIBS += $(SYSROOT_DIR)/libOmxCore.so
 
 TEST_SRCS := omx_mp3_dec_test.c
 

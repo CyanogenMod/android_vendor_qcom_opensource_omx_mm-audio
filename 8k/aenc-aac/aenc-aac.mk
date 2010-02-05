@@ -74,7 +74,7 @@ vpath %.c $(LOCAL_DIR)/test
 MM_AENC_AAC_TEST_LDLIBS := -lpthread
 MM_AENC_AAC_TEST_LDLIBS += -ldl
 MM_AENC_AAC_TEST_LDLIBS += libOmxAacEnc.so.$(LIBVER)
-MM_AENC_AAC_TEST_LDLIBS += $(SYSROOT_DIR)/libmm-omxcore.so
+MM_AENC_AAC_TEST_LDLIBS += $(SYSROOT_DIR)/libOmxCore.so
 
 TEST_SRCS := omx_aac_enc_test.c
 
