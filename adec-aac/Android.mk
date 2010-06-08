@@ -27,12 +27,10 @@
 #--------------------------------------------------------------------------
 ifeq ($(TARGET_ARCH),arm)
 
+ADEC_AAC_PATH:= $(call my-dir)
 
-8k_AUDIO_PATH:= $(call my-dir)
-
-include $(8k_AUDIO_PATH)/adec-aac/Android.mk
-include $(8k_AUDIO_PATH)/adec-mp3/Android.mk
-include $(8k_AUDIO_PATH)/aenc-aac/Android.mk
-
+ifeq "$(findstring qsd8250,$(TARGET_PRODUCT))" "qsd8250"
+include $(ADEC_AAC_PATH)/qdsp6/Android.mk
+endif
 
 endif

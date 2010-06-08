@@ -25,5 +25,13 @@
 #OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 #ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #--------------------------------------------------------------------------
+ifeq ($(TARGET_ARCH),arm)
 
-include $(call all-subdir-makefiles)
+
+ADEC_MP3_PATH:= $(call my-dir)
+
+ifeq "$(findstring qsd8250,$(TARGET_PRODUCT))" "qsd8250"
+include $(ADEC_MP3_PATH)/qdsp6/Android.mk
+endif
+
+endif
