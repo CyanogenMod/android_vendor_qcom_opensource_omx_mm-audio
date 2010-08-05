@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2009, Code Aurora Forum. All rights reserved.
+Copyright (c) 2010, Code Aurora Forum. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,8 +28,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <fcntl.h>
 #include <errno.h>
+
 #include <aenc_svr.h>
 
 /**
@@ -43,7 +45,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 void *omx_aac_msg(void *info)
 {
-    struct aac_enc_ipc_info *aac_info = (struct aac_enc_ipc_info*)info;
+    struct aac_ipc_info *aac_info = (struct aac_ipc_info*)info;
     unsigned char id;
     int n;
 
@@ -68,6 +70,18 @@ void *omx_aac_msg(void *info)
     return 0;
 }
 
+void *omx_aac_events(void *info)
+{
+    struct aac_ipc_info *aac_info = (struct aac_ipc_info*)info;
+    unsigned char id;
+    int n;
+
+    DEBUG_DETAIL("%s: message thread start\n", aac_info->thread_name);
+    aac_info->process_msg_cb(aac_info->client_data, id);
+    DEBUG_DETAIL("%s: message thread stop\n", aac_info->thread_name);
+    return 0;
+}
+
 /**
  @brief This function starts command server
 
@@ -76,16 +90,16 @@ void *omx_aac_msg(void *info)
   through callback
  @return handle to msging thread
  */
-struct aac_enc_ipc_info *omx_aac_thread_create(
+struct aac_ipc_info *omx_aac_thread_create(
                                     message_func cb,
                                     void* client_data,
                                     char* th_name)
 {
     int r;
     int fds[2];
-    struct aac_enc_ipc_info *aac_info;
+    struct aac_ipc_info *aac_info;
 
-    aac_info = calloc(1, sizeof(struct aac_enc_ipc_info));
+    aac_info = calloc(1, sizeof(struct aac_ipc_info));
     if (!aac_info)
     {
         return 0;
@@ -103,7 +117,7 @@ struct aac_enc_ipc_info *omx_aac_thread_create(
 
     aac_info->pipe_in = fds[0];
     aac_info->pipe_out = fds[1];
-
+   
     r = pthread_create(&aac_info->thr, 0, omx_aac_msg, aac_info);
     if (r < 0) goto fail_thread;
 
@@ -121,7 +135,60 @@ fail_pipe:
     return 0;
 }
 
-void omx_aac_thread_stop(struct aac_enc_ipc_info *aac_info) {
+/**
+ *  @brief This function starts command server
+ *
+ *   @param cb pointer to callback function from the client
+ *    @param client_data reference client wants to get back
+ *      through callback
+ *       @return handle to msging thread
+ *        */
+struct aac_ipc_info *omx_aac_event_thread_create(
+                                    message_func cb,
+                                    void* client_data,
+                                    char* th_name)
+{
+    int r;
+    int fds[2];
+    struct aac_ipc_info *aac_info;
+
+    aac_info = calloc(1, sizeof(struct aac_ipc_info));
+    if (!aac_info)
+    {
+        return 0;
+    }
+
+    aac_info->client_data = client_data;
+    aac_info->process_msg_cb = cb;
+    strcpy(aac_info->thread_name,th_name);
+
+    if (pipe(fds))
+    {
+        DEBUG_PRINT("\n%s: pipe creation failed\n", __FUNCTION__);
+        goto fail_pipe;
+    }
+
+    aac_info->pipe_in = fds[0];
+    aac_info->pipe_out = fds[1];
+
+    r = pthread_create(&aac_info->thr, 0, omx_aac_events, aac_info);
+    if (r < 0) goto fail_thread;
+
+    DEBUG_DETAIL("Created thread for %s \n", aac_info->thread_name);
+    return aac_info;
+
+
+fail_thread:
+    close(aac_info->pipe_in);
+    close(aac_info->pipe_out);
+
+fail_pipe:
+    free(aac_info);
+
+    return 0;
+}
+
+void omx_aac_thread_stop(struct aac_ipc_info *aac_info) {
     DEBUG_DETAIL("%s stop server\n", __FUNCTION__);
     close(aac_info->pipe_in);
     close(aac_info->pipe_out);
@@ -133,7 +200,8 @@ void omx_aac_thread_stop(struct aac_enc_ipc_info *aac_info) {
     free(aac_info);
 }
 
-void omx_aac_post_msg(struct aac_enc_ipc_info *aac_info, unsigned char id) {
+void omx_aac_post_msg(struct aac_ipc_info *aac_info, unsigned char id) {
     DEBUG_DETAIL("\n%s id=%d\n", __FUNCTION__,id);
+ 
     write(aac_info->pipe_out, &id, 1);
 }

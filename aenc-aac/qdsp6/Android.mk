@@ -1,5 +1,5 @@
 #--------------------------------------------------------------------------
-#Copyright (c) 2009, Code Aurora Forum. All rights reserved.
+#Copyright (c) 2010, Code Aurora Forum. All rights reserved.
 
 #Redistribution and use in source and binary forms, with or without
 #modification, are permitted provided that the following conditions are met:
@@ -38,8 +38,11 @@ include $(CLEAR_VARS)
 libOmxAacEnc-def := -g -O3
 libOmxAacEnc-def += -DQC_MODIFIED
 libOmxAacEnc-def += -D_ANDROID_
+libOmxAacEnc-def += -D_ENABLE_QC_MSG_LOG_
 libOmxAacEnc-def += -DVERBOSE
 libOmxAacEnc-def += -D_DEBUG
+libOmxAacEnc-def += -DAUDIOV2
+
 
 # ---------------------------------------------------------------------------------
 #             Make the Shared library (libOmxAacEnc)
@@ -47,8 +50,8 @@ libOmxAacEnc-def += -D_DEBUG
 
 include $(CLEAR_VARS)
 
-libOmxAacEnc-inc        := $(LOCAL_PATH)/inc
-libOmxAacEnc-inc        += $(TARGET_OUT_HEADERS)/mm-core/omxcore
+libOmxAacEnc-inc       := $(LOCAL_PATH)/inc
+libOmxAacEnc-inc       += $(TARGET_OUT_HEADERS)/mm-core/omxcore
 
 LOCAL_MODULE            := libOmxAacEnc
 LOCAL_CFLAGS            := $(libOmxAacEnc-def)
@@ -67,22 +70,24 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 
-mm-aac-enc-test-inc     := $(LOCAL_PATH)/inc
-mm-aac-enc-test-inc     += $(LOCAL_PATH)/test
-mm-aac-enc-test-inc     += $(TARGET_OUT_HEADERS)/mm-core/omxcore
+mm-aac-enc-test-inc    := $(LOCAL_PATH)/inc
+mm-aac-enc-test-inc    += $(LOCAL_PATH)/test
+mm-aac-enc-test-inc    += $(TARGET_OUT_HEADERS)/mm-audio/audio-alsa 
+mm-aac-enc-test-inc    += $(TARGET_OUT_HEADERS)/mm-core/omxcore
 
 LOCAL_MODULE            := mm-aenc-omxaac-test
 LOCAL_CFLAGS            := $(libOmxAacEnc-def)
-LOCAL_C_INCLUDES        := $(libOmxAacEnc-inc)
+LOCAL_C_INCLUDES        := $(mm-aac-enc-test-inc)
 LOCAL_PRELINK_MODULE    := false
 LOCAL_SHARED_LIBRARIES  := libmm-omxcore
 LOCAL_SHARED_LIBRARIES  += libOmxAacEnc
+LOCAL_SHARED_LIBRARIES  += libaudioalsa
 
 LOCAL_SRC_FILES         := test/omx_aac_enc_test.c
 
 include $(BUILD_EXECUTABLE)
 
-endif #BUILD_TINY_ANDROID
+endif
 
 # ---------------------------------------------------------------------------------
 #                     END

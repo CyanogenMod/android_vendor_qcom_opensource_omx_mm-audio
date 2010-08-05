@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2009, Code Aurora Forum. All rights reserved.
+Copyright (c) 2010, Code Aurora Forum. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -213,14 +213,21 @@ bool Map<T,T2>::erase(T d)
 template <typename T,typename T2>
 bool Map<T,T2>::eraseall()
 {
+    // Be careful while using this method
+    // it not only removes the node but FREES(not delete) the allocated
+    // memory.
     node *tempnode;
     tmp = head;
     while(head)
     {
        tempnode = head;
-       tempnode->next = NULL;
        head = head->next;
-       delete tempnode;
+       tempnode->next = NULL;
+       if(tempnode->data)
+           free(tempnode->data);
+       if(tempnode->data2)
+           free(tempnode->data2);
+           delete tempnode;
     }
     tail = head = NULL;
     return true;

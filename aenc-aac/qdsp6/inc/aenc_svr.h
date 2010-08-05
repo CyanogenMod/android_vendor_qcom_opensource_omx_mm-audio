@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2009, Code Aurora Forum. All rights reserved.
+Copyright (c) 2010, Code Aurora Forum. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,29 +31,21 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 #include <pthread.h>
 #include <sched.h>
 
 #ifdef _ANDROID_
-#include <utils/Log.h>
-#define LOG_TAG "OMX_AAC_ENC"
-#define DEBUG_PRINT_ERROR LOGE
-#define DEBUG_PRINT LOGI
-#define DEBUG_DETAIL LOGV
-#else
-#define DEBUG_PRINT_ERROR printf
-#define DEBUG_PRINT printf
-#define DEBUG_DETAIL
+#define LOG_TAG "QC_AACENC"
 #endif
+#include "qc_omx_msg.h"
 
 typedef void (*message_func)(void* client_data, unsigned char id);
 
 /**
- @brief audio decoder ipc info structure
+ @brief audio encoder ipc info structure
 
  */
-struct aac_enc_ipc_info
+struct aac_ipc_info
 {
     pthread_t thr;
     int pipe_in;
@@ -72,18 +64,20 @@ struct aac_enc_ipc_info
   through callback
  @return handle to command server
  */
-struct aac_enc_ipc_info *omx_aac_thread_create(message_func cb,
+struct aac_ipc_info *omx_aac_thread_create(message_func cb,
     void* client_data,
     char *th_name);
 
-
+struct aac_ipc_info *omx_aac_event_thread_create(message_func cb,
+    void* client_data,
+    char *th_name);
 /**
  @brief This function stop command server
 
  @param svr handle to command server
  @return none
  */
-void omx_aac_thread_stop(struct aac_enc_ipc_info *aac_ipc);
+void omx_aac_thread_stop(struct aac_ipc_info *aac_ipc);
 
 
 /**
@@ -92,7 +86,7 @@ void omx_aac_thread_stop(struct aac_enc_ipc_info *aac_ipc);
  @param svr handle to command server
  @return none
  */
-void omx_aac_post_msg(struct aac_enc_ipc_info *aac_ipc,
+void omx_aac_post_msg(struct aac_ipc_info *aac_ipc,
                           unsigned char id);
 
 #ifdef __cplusplus
