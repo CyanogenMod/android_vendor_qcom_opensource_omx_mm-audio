@@ -41,8 +41,9 @@ libOmxEvrcEnc-def += -D_ANDROID_
 libOmxEvrcEnc-def += -D_ENABLE_QC_MSG_LOG_
 libOmxEvrcEnc-def += -DVERBOSE
 libOmxEvrcEnc-def += -D_DEBUG
+ifeq ($(strip $(QC_PROP)),true)
 libOmxEvrcEnc-def += -DAUDIOV2
-
+endif
 
 # ---------------------------------------------------------------------------------
 #             Make the Shared library (libOmxEvrcEnc)
@@ -73,15 +74,18 @@ include $(CLEAR_VARS)
 mm-evrc-enc-test-inc    := $(LOCAL_PATH)/inc
 mm-evrc-enc-test-inc    += $(LOCAL_PATH)/test
 mm-evrc-enc-test-inc    += $(TARGET_OUT_HEADERS)/mm-core/omxcore
+ifeq ($(strip $(QC_PROP)),true)
 mm-evrc-enc-test-inc     += $(TARGET_OUT_HEADERS)/mm-audio/audio-alsa 
+endif
 LOCAL_MODULE            := mm-aenc-omxevrc-test
 LOCAL_CFLAGS            := $(libOmxEvrcEnc-def)
 LOCAL_C_INCLUDES        := $(mm-evrc-enc-test-inc)
 LOCAL_PRELINK_MODULE    := false
 LOCAL_SHARED_LIBRARIES  := libmm-omxcore
 LOCAL_SHARED_LIBRARIES  += libOmxEvrcEnc
+ifeq ($(strip $(QC_PROP)),true)
 LOCAL_SHARED_LIBRARIES  += libaudioalsa
-
+endif
 LOCAL_SRC_FILES         := test/omx_evrc_enc_test.c
 
 include $(BUILD_EXECUTABLE)
