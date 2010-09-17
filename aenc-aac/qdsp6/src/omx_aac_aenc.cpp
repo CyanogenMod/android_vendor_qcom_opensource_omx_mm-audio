@@ -266,7 +266,9 @@ omx_aac_aenc::omx_aac_aenc(): m_tmp_meta_buf(NULL),
         m_comp_deinit(0),
         bFlushinprogress(0),
         output_buffer_size(0),
-        input_buffer_size(0)
+        input_buffer_size(0),
+        adif_flag(0),
+        mp4ff_flag(0)
 {
     int cond_ret = 0;
     memset(&m_cmp, 0, sizeof(m_cmp));
@@ -1050,7 +1052,8 @@ OMX_ERRORTYPE omx_aac_aenc::component_init(OMX_STRING role)
     is_out_th_sleep= false;
 
     is_in_th_sleep=false;
-
+    adif_flag = 0;
+    mp4ff_flag = 0;
     memset(&m_priority_mgm, 0, sizeof(m_priority_mgm));
     m_priority_mgm.nGroupID =0;
     m_priority_mgm.nGroupPriority=0;
@@ -3998,6 +4001,19 @@ OMX_ERRORTYPE  omx_aac_aenc::fill_this_buffer_proxy
             adif_flag++;
             szadifhr = AUDAAC_MAX_ADIF_HEADER_LENGTH;
         }
+        else if((m_aac_param.eAACStreamFormat == OMX_AUDIO_AACStreamFormatMP4FF)
+                &&(mp4ff_flag == 0))
+        {
+            DEBUG_PRINT("OMX_AUDIO_AACStreamFormatMP4FF\n");
+            audaac_rec_install_mp4ff_header_variable(0,sample_idx,m_aac_param.nChannels);
+            memcpy(buffer->pBuffer,&audaac_header_mp4ff[0],AUDAAC_MAX_MP4FF_HEADER_LENGTH);
+            buffer->nFilledLen = AUDAAC_MAX_MP4FF_HEADER_LENGTH;
+            buffer->nTimeStamp = 0;
+            frame_done_cb((OMX_BUFFERHEADERTYPE *)buffer);
+            mp4ff_flag++;
+            return OMX_ErrorNone;
+
+        }
         else
         {
 
@@ -4018,6 +4034,7 @@ OMX_ERRORTYPE  omx_aac_aenc::fill_this_buffer_proxy
 
          meta_out = (ENC_META_OUT *)(buffer->pBuffer + sizeof(unsigned char));
          buffer->nTimeStamp = ((meta_out->msw_ts << 32)+ meta_out->lsw_ts);
+         buffer->nTimeStamp = (buffer->nTimeStamp)*1000;
          nTimestamp = buffer->nTimeStamp;
          buffer->nFlags |= meta_out->nflags;
          buffer->nOffset =  meta_out->offset_to_frame + 1;
@@ -4302,7 +4319,8 @@ void  omx_aac_aenc::deinit_encoder()
     m_out_bEnabled = OMX_FALSE;
     m_inp_bPopulated = OMX_FALSE;
     m_out_bPopulated = OMX_FALSE;
-
+    adif_flag = 0;
+    mp4ff_flag = 0;
     if ( m_drv_fd >= 0 )
     {
         if(close(m_drv_fd) < 0)
@@ -4654,5 +4672,34 @@ void   omx_aac_aenc::audaac_rec_install_bits(OMX_U8 *input,
 
     num_remaining -= num_to_copy;
   }
+}
+void  omx_aac_aenc::audaac_rec_install_mp4ff_header_variable (OMX_U16  byte_num,
+                                                        OMX_U32 sample_index,
+                                                        OMX_U8 channel_config)
+{
+        OMX_U32 value;
+        OMX_U16 audaac_hdr_bit_index;
+        audaac_header_mp4ff[0] = 0;
+        audaac_header_mp4ff[1] = 0;
+        audaac_hdr_bit_index = 0;
+
+        /* Audio object type, 5 bit */
+        audaac_rec_install_bits(audaac_header_mp4ff,
+                          AUDAAC_MP4FF_OBJ_TYPE,
+                          2,
+                          &(audaac_hdr_bit_index));
+
+        /* Frequency index, 4 bit */
+        audaac_rec_install_bits(audaac_header_mp4ff,
+                          AUDAAC_MP4FF_FREQ_IDX,
+                          (OMX_U32)sample_index,
+                          &(audaac_hdr_bit_index));
+
+        /* Channel config filed, 4 bit */
+        audaac_rec_install_bits(audaac_header_mp4ff,
+                          AUDAAC_MP4FF_CH_CONFIG,
+                          channel_config,
+                          &(audaac_hdr_bit_index));
+
 }
 

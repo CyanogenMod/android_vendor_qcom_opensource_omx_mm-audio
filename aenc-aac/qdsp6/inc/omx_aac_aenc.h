@@ -139,6 +139,12 @@ extern "C" {
                                           + 1023) & (~1023))
 //ADIF Header
 #define AUDAAC_MAX_ADIF_HEADER_LENGTH 16
+//Raw Header
+#define AUDAAC_MAX_MP4FF_HEADER_LENGTH  2
+
+#define AUDAAC_MP4FF_OBJ_TYPE           5
+#define AUDAAC_MP4FF_FREQ_IDX           4
+#define AUDAAC_MP4FF_CH_CONFIG          4
 
 #define AUDAAC_ADIF_VBR               8
 #define AUDAAC_ADIF_OBJ_TYPE          8
@@ -439,9 +445,11 @@ private:
     OMX_U8                         m_eos_bm;
     OMX_S32                        m_volume;//Unit to be determined
     OMX_U8                         audaac_header_adif[AUDAAC_MAX_ADIF_HEADER_LENGTH];
+    OMX_U8                         audaac_header_mp4ff[AUDAAC_MAX_MP4FF_HEADER_LENGTH];
     OMX_U16                        audaac_hdr_bit_index;
     OMX_S32                        sample_idx;
     OMX_S32                        adif_flag;
+    OMX_S32                        mp4ff_flag;
     OMX_PTR                        m_app_data;// Application data
     int                            nNumInputBuf;
     int                            nNumOutputBuf;
@@ -609,6 +617,8 @@ private:
     void deinit_encoder();
     void audaac_rec_install_adif_header_variable (OMX_U16  byte_num,
                         OMX_U32 sample_index, OMX_U8 channel_config);
+    void  audaac_rec_install_mp4ff_header_variable (OMX_U16  byte_num,
+                        OMX_U32 sample_index,OMX_U8 channel_config);
     void audaac_rec_install_bits(OMX_U8 *input,
                 OMX_U8 num_bits_reqd,
                 OMX_U32  value,
