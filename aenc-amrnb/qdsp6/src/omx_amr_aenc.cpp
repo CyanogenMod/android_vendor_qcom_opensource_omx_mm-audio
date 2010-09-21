@@ -3949,6 +3949,7 @@ OMX_ERRORTYPE  omx_amr_aenc::fill_this_buffer_proxy
           buffer->nFlags |= meta_out->nflags;
           buffer->nOffset =  meta_out->offset_to_frame + sizeof(unsigned char);
           buffer->nFilledLen = nReadbytes - buffer->nOffset;
+          buffer->nTimeStamp = (buffer->nTimeStamp)*1000;
           nTimestamp = buffer->nTimeStamp;
           DEBUG_PRINT("nflags %d frame_size %d offset_to_frame %d timestamp %d\n",\
             meta_out->nflags, meta_out->frame_size, meta_out->offset_to_frame,
