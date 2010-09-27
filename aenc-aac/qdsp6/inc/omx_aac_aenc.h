@@ -458,7 +458,9 @@ private:
     bool                           is_in_th_sleep;
     bool                           is_out_th_sleep;
     unsigned int                   m_flags;      //encapsulate the waiting states.
-    unsigned int                   nTimestamp;
+    OMX_U64                        nTimestamp;
+    OMX_U64                        ts;
+    unsigned int                   frameduration;
     unsigned int                   pcm_input; //tunnel or non-tunnel
     unsigned int                   m_inp_act_buf_count;    // Num of Input Buffers
     unsigned int                   m_out_act_buf_count;    // Numb of Output Buffers

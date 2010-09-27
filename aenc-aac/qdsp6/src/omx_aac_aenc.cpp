@@ -268,7 +268,9 @@ omx_aac_aenc::omx_aac_aenc(): m_tmp_meta_buf(NULL),
         output_buffer_size(0),
         input_buffer_size(0),
         adif_flag(0),
-        mp4ff_flag(0)
+        mp4ff_flag(0),
+        ts(0),
+        frameduration(0)
 {
     int cond_ret = 0;
     memset(&m_cmp, 0, sizeof(m_cmp));
@@ -1040,8 +1042,8 @@ OMX_ERRORTYPE omx_aac_aenc::component_init(OMX_STRING role)
     m_pcm_param.nSamplingRate = DEFAULT_SF;
 
     nTimestamp = 0;
-
-
+    ts = 0;
+    frameduration = 0;
     nNumInputBuf = 0;
     nNumOutputBuf = 0;
     m_ipc_to_in_th = NULL;  // Command server instance
@@ -1353,7 +1355,8 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
 
 
                     nTimestamp=0;
-
+                    ts = 0; 
+                    frameduration = 0;
                     DEBUG_PRINT("SCP-->Idle to Loaded\n");
                 } else
                 {
@@ -1446,6 +1449,7 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 }
                 DEBUG_PRINT("SCP-->Idle to Executing\n");
                 nState = eState;
+                frameduration = (1024*1000000)/m_aac_param.nSampleRate;
             } else if (eState == OMX_StateIdle)
             {
                 DEBUG_PRINT("OMXCORE-SM: Idle-->Idle\n");
@@ -4034,7 +4038,9 @@ OMX_ERRORTYPE  omx_aac_aenc::fill_this_buffer_proxy
 
          meta_out = (ENC_META_OUT *)(buffer->pBuffer + sizeof(unsigned char));
          buffer->nTimeStamp = ((meta_out->msw_ts << 32)+ meta_out->lsw_ts);
-         buffer->nTimeStamp = (buffer->nTimeStamp)*1000;
+
+         ts += frameduration;
+         buffer->nTimeStamp = ts;
          nTimestamp = buffer->nTimeStamp;
          buffer->nFlags |= meta_out->nflags;
          buffer->nOffset =  meta_out->offset_to_frame + 1;
@@ -4321,6 +4327,9 @@ void  omx_aac_aenc::deinit_encoder()
     m_out_bPopulated = OMX_FALSE;
     adif_flag = 0;
     mp4ff_flag = 0;
+    ts = 0;
+    nTimestamp = 0;
+    frameduration = 0;
     if ( m_drv_fd >= 0 )
     {
         if(close(m_drv_fd) < 0)

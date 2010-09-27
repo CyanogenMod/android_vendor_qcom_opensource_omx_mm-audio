@@ -266,7 +266,8 @@ omx_amr_aenc::omx_amr_aenc(): m_tmp_meta_buf(NULL),
         m_comp_deinit(0),
         bFlushinprogress(0),
         output_buffer_size(0),
-        input_buffer_size(0)
+        input_buffer_size(0),
+        ts(0) 
 {
     int cond_ret = 0;
     memset(&m_cmp, 0, sizeof(m_cmp));
@@ -1035,7 +1036,7 @@ OMX_ERRORTYPE omx_amr_aenc::component_init(OMX_STRING role)
     m_pcm_param.nChannels = OMX_AMR_DEFAULT_CH_CFG;
     m_pcm_param.nSamplingRate = OMX_AMR_DEFAULT_SF;
     nTimestamp = 0;
-
+    ts = 0;
 
     nNumInputBuf = 0;
     nNumOutputBuf = 0;
@@ -1348,7 +1349,7 @@ OMX_ERRORTYPE  omx_amr_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                     }
 
                     nTimestamp=0;
-
+                    ts = 0;
                     DEBUG_PRINT("SCP-->Idle to Loaded\n");
                 } else
                 {
@@ -3949,7 +3950,8 @@ OMX_ERRORTYPE  omx_amr_aenc::fill_this_buffer_proxy
           buffer->nFlags |= meta_out->nflags;
           buffer->nOffset =  meta_out->offset_to_frame + sizeof(unsigned char);
           buffer->nFilledLen = nReadbytes - buffer->nOffset;
-          buffer->nTimeStamp = (buffer->nTimeStamp)*1000;
+          ts += FRAMEDURATION;
+          buffer->nTimeStamp = ts;
           nTimestamp = buffer->nTimeStamp;
           DEBUG_PRINT("nflags %d frame_size %d offset_to_frame %d timestamp %d\n",\
             meta_out->nflags, meta_out->frame_size, meta_out->offset_to_frame,
@@ -4230,6 +4232,8 @@ void  omx_amr_aenc::deinit_encoder()
     m_out_bEnabled = OMX_FALSE;
     m_inp_bPopulated = OMX_FALSE;
     m_out_bPopulated = OMX_FALSE;
+    nTimestamp = 0;
+    ts = 0;
 
     if ( m_drv_fd >= 0 )
     {
