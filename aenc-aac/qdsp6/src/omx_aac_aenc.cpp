@@ -3983,27 +3983,26 @@ OMX_ERRORTYPE  omx_aac_aenc::fill_this_buffer_proxy
             DEBUG_DETAIL("FTBP->Al_len[%d]buf[%p]size[%d]numOutBuf[%d]\n",\
                          buffer->nAllocLen,m_tmp_out_meta_buf,
                          nReadbytes,nNumOutputBuf);
-
+            szadifhr = AUDAAC_MAX_ADIF_HEADER_LENGTH; 
             numframes =  *m_tmp_out_meta_buf;
             metainfo  = ((sizeof(ENC_META_OUT) * numframes)+ sizeof(unsigned char));
             audaac_rec_install_adif_header_variable(0,sample_idx, m_aac_param.nChannels);
             memcpy(buffer->pBuffer,m_tmp_out_meta_buf,metainfo);
-            memcpy(buffer->pBuffer + metainfo,&audaac_header_adif[0],AUDAAC_MAX_ADIF_HEADER_LENGTH);
-            memcpy(buffer->pBuffer + metainfo + AUDAAC_MAX_ADIF_HEADER_LENGTH,
+            memcpy(buffer->pBuffer + metainfo,&audaac_header_adif[0],szadifhr);
+            memcpy(buffer->pBuffer + metainfo + szadifhr,
             m_tmp_out_meta_buf + metainfo,(nReadbytes - metainfo));
             src += sizeof(unsigned char);
             meta_out = (ENC_META_OUT *)src;
-            meta_out->frame_size += AUDAAC_MAX_ADIF_HEADER_LENGTH;
+            meta_out->frame_size += szadifhr;
             numframes--;
             while(numframes > 0)
             {
                  src += sizeof(ENC_META_OUT);
                  meta_out = (ENC_META_OUT *)src;
-                 meta_out->offset_to_frame += AUDAAC_MAX_ADIF_HEADER_LENGTH;
+                 meta_out->offset_to_frame += szadifhr;
                  numframes--;
             }
             adif_flag++;
-            szadifhr = AUDAAC_MAX_ADIF_HEADER_LENGTH;
         }
         else if((m_aac_param.eAACStreamFormat == OMX_AUDIO_AACStreamFormatMP4FF)
                 &&(mp4ff_flag == 0))
@@ -4520,130 +4519,258 @@ void  omx_aac_aenc::audaac_rec_install_adif_header_variable (OMX_U16  byte_num,
                             OMX_U32 sample_index,
                             OMX_U8 channel_config)
 {
-    OMX_U32 value;
+  OMX_U8   buf8;
+  OMX_U32  value;
+  OMX_U32  dummy = 0;
+  OMX_U8    num_pfe, num_fce, num_sce, num_bce; 
+  OMX_U8    num_lfe, num_ade, num_vce, num_com;
+  OMX_U8    pfe_index;
+  OMX_U8    i;
+  OMX_BOOL variable_bit_rate = OMX_FALSE;
+  num_pfe = num_sce = num_bce = 
+  num_lfe = num_ade = num_vce = num_com = 0;
+  audaac_hdr_bit_index = 32;
+  num_fce = 1;
+  /* Store Header Id "ADIF" first */
+  memcpy(&audaac_header_adif[0], "ADIF", sizeof(OMX_U32));
 
-    audaac_header_adif[0] = 65;
-    audaac_header_adif[1] = 68;
-    audaac_header_adif[2] = 73;
-    audaac_header_adif[3] = 70;
-    audaac_hdr_bit_index = 32;
+  /* copyright_id_present field, 1 bit */
+  value = 0;
+  audaac_rec_install_bits(audaac_header_adif, 
+                          AAC_COPYRIGHT_PRESENT_SIZE, 
+                          value,
+                          &(audaac_hdr_bit_index));
+
+  if (value) {
+    /* Copyright present, 72 bits; skip it for now,
+     * just install dummy value */
+    audaac_rec_install_bits(audaac_header_adif, 
+                            72,
+                            dummy,
+                            &(audaac_hdr_bit_index));
+  }
+
+  /* original_copy field, 1 bit */
+  value = 0;
+  audaac_rec_install_bits(audaac_header_adif,
+                          AAC_ORIGINAL_COPY_SIZE,
+                          0,
+                          &(audaac_hdr_bit_index));
+
+  /* home field, 1 bit */
+  value = 0;
+  audaac_rec_install_bits(audaac_header_adif,
+                          AAC_HOME_SIZE, 
+                          0,
+                          &(audaac_hdr_bit_index));
+
+  /* bitstream_type = 1, varibable bit rate, 1 bit */
+  value = 0;
+  audaac_rec_install_bits(audaac_header_adif,
+                          AAC_BITSTREAM_TYPE_SIZE,
+                          value,
+                          &(audaac_hdr_bit_index));
+
+  /* bit_rate field, 23 bits */
+  audaac_rec_install_bits(audaac_header_adif,
+                          AAC_BITRATE_SIZE, 
+                          (OMX_U32)m_aac_param.nBitRate,
+                          &(audaac_hdr_bit_index));
+
+  /* num_program_config_elements, 4 bits */
+  num_pfe = 0;
+  audaac_rec_install_bits(audaac_header_adif,
+                          AAC_NUM_PFE_SIZE, 
+                          (OMX_U32)num_pfe,
+                          &(audaac_hdr_bit_index));
+
+  /* below is to install program_config_elements field,
+   * for now only one element is supported */
+  for (pfe_index=0; pfe_index < num_pfe+1; pfe_index++) {
 
 
-    /* Copyright present field 1bit */
-    value = 0;
+     if (variable_bit_rate == OMX_FALSE) { /* impossible, put dummy value for now */
+       audaac_rec_install_bits(audaac_header_adif, 
+                               AAC_BUFFER_FULLNESS_SIZE, 
+                               0,
+                               &(audaac_hdr_bit_index));
+
+     }
+
+    dummy = 0;
+
+    /* element_instance_tag field, 4 bits */
     audaac_rec_install_bits(audaac_header_adif,
-              COPY_RIGHT_PRESENT,
-              0,
-              &(audaac_hdr_bit_index));
+                            AAC_ELEMENT_INSTANCE_TAG_SIZE, 
+                            dummy,
+                            &(audaac_hdr_bit_index));
 
-    /* ORIGINAL_COPY field, 1 bit */
+    /* object_type, 2 bits, AAC LC is supported */
+    value = 1;
     audaac_rec_install_bits(audaac_header_adif,
-              ORIGINAL_COPY,
-              0,
-              &(audaac_hdr_bit_index));
+                            AAC_PROFILE_SIZE,  /* object type */
+                            value,
+                            &(audaac_hdr_bit_index));
 
-        /* HOME field, 1 bit */
+    /* sampling_frequency_index, 4 bits */
     audaac_rec_install_bits(audaac_header_adif,
-              HOME,
-              0,
-              &(audaac_hdr_bit_index));
+                            AAC_SAMPLING_FREQ_INDEX_SIZE, 
+                            (OMX_U32)sample_index,
+                            &(audaac_hdr_bit_index));
 
-    /* BITSTREAM_TYPE field, 1 bit */
+    /* num_front_channel_elements, 4 bits */
     audaac_rec_install_bits(audaac_header_adif,
-              BITSTREAM_TYPE,
-              0,
-              &(audaac_hdr_bit_index));
+                            AAC_NUM_FRONT_CHANNEL_ELEMENTS_SIZE, 
+                            num_fce,
+                            &(audaac_hdr_bit_index));
 
-    /* BITRATE, 23 bit */
+    /* num_side_channel_elements, 4 bits */
     audaac_rec_install_bits(audaac_header_adif,
-              BITRATE,
-              m_aac_param.nBitRate,
-              &(audaac_hdr_bit_index));
+                            AAC_NUM_SIDE_CHANNEL_ELEMENTS_SIZE, 
+                            dummy,
+                            &(audaac_hdr_bit_index));
 
-    /* NUM_PROGRAM_CONFIG_ELEMENTS 4 bit */
+    /* num_back_channel_elements, 4 bits */
     audaac_rec_install_bits(audaac_header_adif,
-              NUM_PROGRAM_CONFIG_ELEMENTS,
-              0,
-              &(audaac_hdr_bit_index));
+                            AAC_NUM_BACK_CHANNEL_ELEMENTS_SIZE, 
+                            dummy,
+                            &(audaac_hdr_bit_index));
 
-    /*buffer_fullness 20bit*/
+    /* num_lfe_channel_elements, 2 bits */
     audaac_rec_install_bits(audaac_header_adif,
-              20,
-              0,
-              &(audaac_hdr_bit_index));
-    #if 0
-    /*Var header */
-    audaac_rec_install_bits(audaac_header_adif,
-              1,
-              0,
-              &(audaac_hdr_bit_index));
-    #endif
+                            AAC_NUM_LFE_CHANNEL_ELEMENTS_SIZE, 
+                            dummy,
+                            &(audaac_hdr_bit_index));
 
+    /* num_assoc_data_elements, 3 bits */
     audaac_rec_install_bits(audaac_header_adif,
-              AAC_ELEMENT_INSTANCE_TAG_SIZE,
-              0,
-              &(audaac_hdr_bit_index));
+                            AAC_NUM_ASSOC_DATA_ELEMENTS_SIZE, 
+                            num_ade,
+                            &(audaac_hdr_bit_index));
 
+    /* num_valid_cc_elements, 4 bits */
     audaac_rec_install_bits(audaac_header_adif,
-              AAC_PROFILE_SIZE,
-              1,
-              &(audaac_hdr_bit_index));
+                            AAC_NUM_VALID_CC_ELEMENTS_SIZE, 
+                            num_vce,
+                            &(audaac_hdr_bit_index));
 
-
+    /* mono_mixdown_present, 1 bits */
     audaac_rec_install_bits(audaac_header_adif,
-              AAC_SAMPLING_FREQ_INDEX_SIZE,
-              (OMX_U32)sample_index,
-              &(audaac_hdr_bit_index));
+                            AAC_MONO_MIXDOWN_PRESENT_SIZE, 
+                            dummy,
+                            &(audaac_hdr_bit_index));
 
+    if (dummy) {
+      audaac_rec_install_bits(audaac_header_adif,
+                              AAC_MONO_MIXDOWN_ELEMENT_SIZE, 
+                              dummy,
+                              &(audaac_hdr_bit_index));
+    }
+   
+    /* stereo_mixdown_present */
     audaac_rec_install_bits(audaac_header_adif,
-              AAC_NUM_FRONT_CHANNEL_ELEMENTS_SIZE,
-              1,
-              &(audaac_hdr_bit_index));
+                            AAC_STEREO_MIXDOWN_PRESENT_SIZE, 
+                            dummy,
+                            &(audaac_hdr_bit_index));
 
-    audaac_rec_install_bits(audaac_header_adif,
-              AAC_NUM_SIDE_CHANNEL_ELEMENTS_SIZE,
-              0,
-              &(audaac_hdr_bit_index));
+    if (dummy) {
+      audaac_rec_install_bits(audaac_header_adif,
+                              AAC_STEREO_MIXDOWN_ELEMENT_SIZE, 
+                              dummy,
+                              &(audaac_hdr_bit_index));
+    }
 
+    /* matrix_mixdown_idx_present, 1 bit */
     audaac_rec_install_bits(audaac_header_adif,
-              AAC_NUM_BACK_CHANNEL_ELEMENTS_SIZE,
-              0,
-              &(audaac_hdr_bit_index));
+                            AAC_MATRIX_MIXDOWN_PRESENT_SIZE, 
+                            dummy,
+                            &(audaac_hdr_bit_index));
 
-    audaac_rec_install_bits(audaac_header_adif,
-              AAC_NUM_LFE_CHANNEL_ELEMENTS_SIZE,
-              0,
-              &(audaac_hdr_bit_index));
+    if (dummy) {
+      audaac_rec_install_bits(audaac_header_adif,
+                              AAC_MATRIX_MIXDOWN_SIZE, 
+                              dummy,
+                              &(audaac_hdr_bit_index));
+    }
+    if(m_aac_param.nChannels  == 2)
+        value = 16;
+    else
+        value = 0; 
+    for (i=0; i<num_fce; i++) {
+      audaac_rec_install_bits(audaac_header_adif,
+                              AAC_FCE_SIZE, 
+                              value,
+                              &(audaac_hdr_bit_index));
+    }
+    
+    for (i=0; i<num_sce; i++) {
+      audaac_rec_install_bits(audaac_header_adif,
+                              AAC_SCE_SIZE, 
+                              dummy,
+                              &(audaac_hdr_bit_index));
+    }
 
-    audaac_rec_install_bits(audaac_header_adif,
-              AAC_NUM_ASSOC_DATA_ELEMENTS_SIZE,
-              0,
-              &(audaac_hdr_bit_index));
+    for (i=0; i<num_bce; i++) {
+      audaac_rec_install_bits(audaac_header_adif,
+                              AAC_BCE_SIZE, 
+                              dummy,
+                              &(audaac_hdr_bit_index));
+    }
 
-    audaac_rec_install_bits(audaac_header_adif,
-              AAC_NUM_VALID_CC_ELEMENTS_SIZE,
-              0,
-              &(audaac_hdr_bit_index));
+    for (i=0; i<num_lfe; i++) {
+      audaac_rec_install_bits(audaac_header_adif,
+                              AAC_LFE_SIZE, 
+                              dummy,
+                              &(audaac_hdr_bit_index));
+    }
 
-    audaac_rec_install_bits(audaac_header_adif,
-              AAC_MONO_MIXDOWN_PRESENT_SIZE,
-              0,
-              &(audaac_hdr_bit_index));
+    for (i=0; i<num_ade; i++) {
+      audaac_rec_install_bits(audaac_header_adif,
+                              AAC_ADE_SIZE, 
+                              dummy,
+                              &(audaac_hdr_bit_index));
+    }
 
-    audaac_rec_install_bits(audaac_header_adif,
-              AAC_STEREO_MIXDOWN_PRESENT_SIZE,
-              0,
-              &(audaac_hdr_bit_index));
+    for (i=0; i<num_vce; i++) {
+      audaac_rec_install_bits(audaac_header_adif,
+                              AAC_VCE_SIZE, 
+                              dummy,
+                              &(audaac_hdr_bit_index));
+    }
 
-    audaac_rec_install_bits(audaac_header_adif,
-              AAC_MATRIX_MIXDOWN_PRESENT_SIZE,
-              0,
-              &(audaac_hdr_bit_index));
+    /* byte_alignment() */
+    buf8 = (OMX_U8)((audaac_hdr_bit_index) & (0x07));
+    if (buf8) {
+      audaac_rec_install_bits(audaac_header_adif,
+                              buf8,
+                              dummy,
+                              &(audaac_hdr_bit_index));
+    }
 
+    /* comment_field_bytes, 8 bits,
+     * skip the comment section */
     audaac_rec_install_bits(audaac_header_adif,
-              AAC_FCE_SIZE,
-              0,
-              &(audaac_hdr_bit_index));
+                            AAC_COMMENT_FIELD_BYTES_SIZE,
+                            num_com,
+                            &(audaac_hdr_bit_index));
+
+    for (i=0; i<num_com; i++) {
+      audaac_rec_install_bits(audaac_header_adif,
+                              AAC_COMMENT_FIELD_DATA_SIZE,
+                              dummy,
+                              &(audaac_hdr_bit_index));
+    }
+  } /* for (pfe_index=0; pfe_index < num_pfe+1; pfe_index++) */
+
+  /* byte_alignment() */
+  buf8 = (OMX_U8)((audaac_hdr_bit_index) & (0x07)) ;
+  if (buf8) {
+      audaac_rec_install_bits(audaac_header_adif,
+                              buf8,
+                              dummy,
+                              &(audaac_hdr_bit_index));
+  }
+
 }
 
 void   omx_aac_aenc::audaac_rec_install_bits(OMX_U8 *input,

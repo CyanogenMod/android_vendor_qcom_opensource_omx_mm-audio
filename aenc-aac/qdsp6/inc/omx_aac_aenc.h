@@ -137,8 +137,6 @@ extern "C" {
 #define MAXFRAMELENGTH                1536
 #define OMX_AAC_OUTPUT_BUFFER_SIZE    ((NUMOFFRAMES * (sizeof(ENC_META_OUT)+ MAXFRAMELENGTH + 1)\
                                           + 1023) & (~1023))
-//ADIF Header
-#define AUDAAC_MAX_ADIF_HEADER_LENGTH 16
 //Raw Header
 #define AUDAAC_MAX_MP4FF_HEADER_LENGTH  2
 
@@ -146,23 +144,16 @@ extern "C" {
 #define AUDAAC_MP4FF_FREQ_IDX           4
 #define AUDAAC_MP4FF_CH_CONFIG          4
 
-#define AUDAAC_ADIF_VBR               8
-#define AUDAAC_ADIF_OBJ_TYPE          8
-#define AUDAAC_ADIF_FREQ_IDX          8
-#define AUDAAC_ADIF_CH_CONFIG         8
-#define AUDAAC_ADIF_SAMPLE_RATE       32
+//ADIF Header
+#define AUDAAC_MAX_ADIF_HEADER_LENGTH 17
 
-#define ADIF_ID                       32
-#define COPY_RIGHT_PRESENT            1
-#define ORIGINAL_COPY                 1
-#define HOME                          1
-#define BITSTREAM_TYPE                1
-#define BITRATE                       23
-#define NUM_PROGRAM_CONFIG_ELEMENTS    4
-
-//From Decoder
-#define AAC_SAMPLING_FREQ_INDEX_SIZE          4
-#define AAC_PROFILE_SIZE                      2
+#define AAC_COPYRIGHT_PRESENT_SIZE    1
+#define AAC_ORIGINAL_COPY_SIZE        1
+#define AAC_HOME_SIZE                 1
+#define AAC_BITSTREAM_TYPE_SIZE               1
+#define AAC_BITRATE_SIZE                     23
+#define AAC_NUM_PFE_SIZE                      4
+#define AAC_BUFFER_FULLNESS_SIZE             20
 #define AAC_ELEMENT_INSTANCE_TAG_SIZE         4
 #define AAC_NUM_FRONT_CHANNEL_ELEMENTS_SIZE   4
 #define AAC_NUM_SIDE_CHANNEL_ELEMENTS_SIZE    4
@@ -184,6 +175,8 @@ extern "C" {
 #define AAC_VCE_SIZE                          5
 #define AAC_COMMENT_FIELD_BYTES_SIZE          8
 #define AAC_COMMENT_FIELD_DATA_SIZE           8
+#define AAC_SAMPLING_FREQ_INDEX_SIZE          4
+#define AAC_PROFILE_SIZE                      2
 
 
 
