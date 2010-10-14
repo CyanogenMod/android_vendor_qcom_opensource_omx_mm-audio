@@ -30,7 +30,7 @@ ifeq ($(TARGET_ARCH),arm)
 
 ADEC_MP3_PATH:= $(call my-dir)
 
-ifeq "$(findstring qsd8250,$(TARGET_PRODUCT))" "qsd8250"
+ifeq "$(findstring qsd8250,$(QCOM_TARGET_PRODUCT))" "qsd8250"
 include $(ADEC_MP3_PATH)/qdsp6/Android.mk
 endif
 
