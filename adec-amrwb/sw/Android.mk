@@ -1,5 +1,5 @@
 #--------------------------------------------------------------------------
-#Copyright (c) 2009, Code Aurora Forum. All rights reserved.
+#Copyright (c) 2010, Code Aurora Forum. All rights reserved.
 
 #Redistribution and use in source and binary forms, with or without
 #modification, are permitted provided that the following conditions are met:
@@ -35,53 +35,44 @@ include $(CLEAR_VARS)
 #                 Common definitons
 # ---------------------------------------------------------------------------------
 
-libOmxMp3Dec-def := -g -O3
-libOmxMp3Dec-def += -DQC_MODIFIED
-libOmxMp3Dec-def += -D_ANDROID_
-libOmxMp3Dec-def += -DVERBOSE
-libOmxMp3Dec-def += -D_DEBUG
+libOmxAmrDec-def := -g -O3
+libOmxAmrDec-def += -DQC_MODIFIED
+libOmxAmrDec-def += -D_ANDROID_
+libOmxAmrDec-def += -D_ENABLE_QC_MSG_LOG_
+libOmxAmrDec-def += -DVERBOSE
+libOmxAmrDec-def += -D_DEBUG
+libOmxAmrDec-def += -DAUDIOV2
 
-# ---------------------------------------------------------------------------------
-#             Make the Shared library (libOmxMp3Dec)
-# ---------------------------------------------------------------------------------
-
-include $(CLEAR_VARS)
-
-libOmxMp3Dec-inc        := $(LOCAL_PATH)/inc
-libOmxMp3Dec-inc        += $(TARGET_OUT_HEADERS)/mm-core/omxcore
-
-LOCAL_MODULE            := libOmxMp3Dec
-LOCAL_CFLAGS            := $(libOmxMp3Dec-def)
-LOCAL_C_INCLUDES        := $(libOmxMp3Dec-inc)
-LOCAL_PRELINK_MODULE    := false
-LOCAL_SHARED_LIBRARIES  := libutils liblog
-
-LOCAL_SRC_FILES         := src/adec_svr.c
-LOCAL_SRC_FILES         += src/omx_mp3_adec.cpp
-
-ifeq "$(findstring qsd8250,$(QCOM_TARGET_PRODUCT))" "qsd8250"
-include $(BUILD_SHARED_LIBRARY)
+ifeq ($(BOARD_USES_QCOM_AUDIO_V2), true)
+libOmxAmrDec-def += -DAUDIOV2
 endif
+
 # ---------------------------------------------------------------------------------
-#             Make the apps-test (mm-adec-omxmp3-test)
+#             Make the apps-test (sw-adec-omxamr-test)
 # ---------------------------------------------------------------------------------
 
 include $(CLEAR_VARS)
 
-mm-mp3-dec-test-inc        := $(LOCAL_PATH)/inc
-mm-mp3-dec-test-inc        += $(LOCAL_PATH)/test
-mm-mp3-dec-test-inc        += $(TARGET_OUT_HEADERS)/mm-core/omxcore
+ifeq ($(BOARD_USES_QCOM_AUDIO_V2), true)
+mm-amr-dec-test-inc   += $(TARGET_OUT_HEADERS)/mm-audio/audio-alsa
+mm-amr-dec-test-inc   += $(TARGET_OUT_HEADERS)/mm-core/omxcore
+mm-amr-dec-test-inc   += $(PV_TOP)/codecs_v2/omx/omx_mastercore/include \
+        		 $(PV_TOP)/codecs_v2/omx/omx_common/include \
+        		 $(PV_TOP)/extern_libs_v2/khronos/openmax/include \
+        		 $(PV_TOP)/codecs_v2/omx/omx_baseclass/include \
+        		 $(PV_TOP)/codecs_v2/omx/omx_amr/include \
+        		 $(PV_TOP)/codecs_v2/audio/amr/dec/include \
 
-LOCAL_MODULE               := mm-adec-omxmp3-test
-LOCAL_CFLAGS               := $(libOmxMp3Dec-def)
-LOCAL_C_INCLUDES           := $(mm-mp3-dec-test-inc)
-LOCAL_PRELINK_MODULE       := false
-LOCAL_SHARED_LIBRARIES     := libmm-omxcore
-LOCAL_SHARED_LIBRARIES     += libOmxMp3Dec
+LOCAL_MODULE            := sw-adec-omxamrwb-test
+LOCAL_CFLAGS            := $(libOmxAmrDec-def)
+LOCAL_C_INCLUDES        := $(mm-amr-dec-test-inc)
+LOCAL_PRELINK_MODULE    := false
+LOCAL_SHARED_LIBRARIES  := libopencore_common
+LOCAL_SHARED_LIBRARIES  += libomx_sharedlibrary
+LOCAL_SHARED_LIBRARIES  += libomx_amrdec_sharedlibrary
+LOCAL_SHARED_LIBRARIES  += libaudioalsa
+LOCAL_SRC_FILES         := test/omx_amrwb_dec_test.c
 
-LOCAL_SRC_FILES            := test/omx_mp3_dec_test.c
-
-ifeq "$(findstring qsd8250,$(QCOM_TARGET_PRODUCT))" "qsd8250"
 include $(BUILD_EXECUTABLE)
 endif
 
@@ -90,4 +81,3 @@ endif #BUILD_TINY_ANDROID
 # ---------------------------------------------------------------------------------
 #                     END
 # ---------------------------------------------------------------------------------
-

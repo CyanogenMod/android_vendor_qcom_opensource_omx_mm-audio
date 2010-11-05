@@ -35,53 +35,44 @@ include $(CLEAR_VARS)
 #                 Common definitons
 # ---------------------------------------------------------------------------------
 
-libOmxMp3Dec-def := -g -O3
-libOmxMp3Dec-def += -DQC_MODIFIED
-libOmxMp3Dec-def += -D_ANDROID_
-libOmxMp3Dec-def += -DVERBOSE
-libOmxMp3Dec-def += -D_DEBUG
+libOmxAacDec-def := -g -O3
+libOmxAacDec-def += -DQC_MODIFIED
+libOmxAacDec-def += -D_ANDROID_
+libOmxAacDec-def += -D_ENABLE_QC_MSG_LOG_
+libOmxAacDec-def += -DVERBOSE
+libOmxAacDec-def += -D_DEBUG
 
-# ---------------------------------------------------------------------------------
-#             Make the Shared library (libOmxMp3Dec)
-# ---------------------------------------------------------------------------------
-
-include $(CLEAR_VARS)
-
-libOmxMp3Dec-inc        := $(LOCAL_PATH)/inc
-libOmxMp3Dec-inc        += $(TARGET_OUT_HEADERS)/mm-core/omxcore
-
-LOCAL_MODULE            := libOmxMp3Dec
-LOCAL_CFLAGS            := $(libOmxMp3Dec-def)
-LOCAL_C_INCLUDES        := $(libOmxMp3Dec-inc)
-LOCAL_PRELINK_MODULE    := false
-LOCAL_SHARED_LIBRARIES  := libutils liblog
-
-LOCAL_SRC_FILES         := src/adec_svr.c
-LOCAL_SRC_FILES         += src/omx_mp3_adec.cpp
-
-ifeq "$(findstring qsd8250,$(QCOM_TARGET_PRODUCT))" "qsd8250"
-include $(BUILD_SHARED_LIBRARY)
+ifeq ($(BOARD_USES_QCOM_AUDIO_V2), true)
+libOmxAacDec-def += -DAUDIOV2
 endif
+
 # ---------------------------------------------------------------------------------
-#             Make the apps-test (mm-adec-omxmp3-test)
+#             Make the apps-test (mm-adec-omxaac-test)
 # ---------------------------------------------------------------------------------
 
 include $(CLEAR_VARS)
 
-mm-mp3-dec-test-inc        := $(LOCAL_PATH)/inc
-mm-mp3-dec-test-inc        += $(LOCAL_PATH)/test
-mm-mp3-dec-test-inc        += $(TARGET_OUT_HEADERS)/mm-core/omxcore
+ifeq ($(BOARD_USES_QCOM_AUDIO_V2), true)
+mm-aac-dec-test-inc   += $(TARGET_OUT_HEADERS)/mm-audio/audio-alsa
+mm-aac-dec-test-inc   += $(TARGET_OUT_HEADERS)/mm-core/omxcore
+mm-aac-dec-test-inc   += $(PV_TOP)/codecs_v2/omx/omx_mastercore/include \
+        		 $(PV_TOP)/codecs_v2/omx/omx_common/include \
+        		 $(PV_TOP)/extern_libs_v2/khronos/openmax/include \
+        		 $(PV_TOP)/codecs_v2/omx/omx_baseclass/include \
+        		 $(PV_TOP)/codecs_v2/omx/omx_aac/include \
+        		 $(PV_TOP)/codecs_v2/audio/aac/dec/include \
 
-LOCAL_MODULE               := mm-adec-omxmp3-test
-LOCAL_CFLAGS               := $(libOmxMp3Dec-def)
-LOCAL_C_INCLUDES           := $(mm-mp3-dec-test-inc)
-LOCAL_PRELINK_MODULE       := false
-LOCAL_SHARED_LIBRARIES     := libmm-omxcore
-LOCAL_SHARED_LIBRARIES     += libOmxMp3Dec
+LOCAL_MODULE            := sw-adec-omxaac-test
+LOCAL_CFLAGS            := $(libOmxAacDec-def)
+LOCAL_C_INCLUDES        := $(mm-aac-dec-test-inc)
+LOCAL_PRELINK_MODULE    := false
+LOCAL_SHARED_LIBRARIES  := libopencore_common
+LOCAL_SHARED_LIBRARIES  += libomx_sharedlibrary
+LOCAL_SHARED_LIBRARIES  += libomx_aacdec_sharedlibrary
+LOCAL_SHARED_LIBRARIES  += libaudioalsa
 
-LOCAL_SRC_FILES            := test/omx_mp3_dec_test.c
+LOCAL_SRC_FILES         := test/omx_aac_dec_test.c
 
-ifeq "$(findstring qsd8250,$(QCOM_TARGET_PRODUCT))" "qsd8250"
 include $(BUILD_EXECUTABLE)
 endif
 
@@ -90,4 +81,3 @@ endif #BUILD_TINY_ANDROID
 # ---------------------------------------------------------------------------------
 #                     END
 # ---------------------------------------------------------------------------------
-

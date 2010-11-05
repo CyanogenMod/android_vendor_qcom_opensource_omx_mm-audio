@@ -50,6 +50,7 @@ include $(CLEAR_VARS)
 libOmxAacDec-inc        := $(LOCAL_PATH)/inc
 libOmxAacDec-inc        += $(TARGET_OUT_HEADERS)/mm-core/omxcore
 
+
 LOCAL_MODULE            := libOmxAacDec
 LOCAL_CFLAGS            := $(libOmxAacDec-def)
 LOCAL_C_INCLUDES        := $(libOmxAacDec-inc)
@@ -59,7 +60,9 @@ LOCAL_SHARED_LIBRARIES  := libutils liblog
 LOCAL_SRC_FILES         := src/adec_svr.c
 LOCAL_SRC_FILES         += src/omx_aac_adec.cpp
 
+ifeq "$(findstring qsd8250,$(QCOM_TARGET_PRODUCT))" "qsd8250"
 include $(BUILD_SHARED_LIBRARY)
+endif
 
 # ---------------------------------------------------------------------------------
 #             Make the apps-test (mm-adec-omxaac-test)
@@ -80,7 +83,9 @@ LOCAL_SHARED_LIBRARIES     += libOmxAacDec
 
 LOCAL_SRC_FILES            := test/omx_aac_dec_test.c
 
+ifeq "$(findstring qsd8250,$(QCOM_TARGET_PRODUCT))" "qsd8250"
 include $(BUILD_EXECUTABLE)
+endif
 
 endif #BUILD_TINY_ANDROID
 
