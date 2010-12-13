@@ -1080,12 +1080,16 @@ OMX_ERRORTYPE omx_qcelp13_aenc::component_init(OMX_STRING role)
         m_tmp_meta_buf = (OMX_U8*) malloc(sizeof(OMX_U8) *
                          (OMX_CORE_INPUT_BUFFER_SIZE + sizeof(META_IN)));
 
-        if (m_tmp_meta_buf == NULL)
-            DEBUG_PRINT("Mem alloc failed for in meta buf\n");
+        if (m_tmp_meta_buf == NULL){
+            DEBUG_PRINT_ERROR("Mem alloc failed for in meta buf\n");
+                return OMX_ErrorInsufficientResources;
+            }
     }
     m_tmp_out_meta_buf = (OMX_U8*)malloc(sizeof(OMX_U8)*OMX_QCELP13_OUTPUT_BUFFER_SIZE);
-        if ( m_tmp_out_meta_buf == NULL )
-            DEBUG_PRINT("Mem alloc failed for out meta buf\n");
+        if ( m_tmp_out_meta_buf == NULL ) {
+            DEBUG_PRINT_ERROR("Mem alloc failed for out meta buf\n");
+                return OMX_ErrorInsufficientResources;
+            }
 
     if(0 == pcm_input)
     {
@@ -1106,7 +1110,7 @@ OMX_ERRORTYPE omx_qcelp13_aenc::component_init(OMX_STRING role)
     }
     if(ioctl(m_drv_fd, AUDIO_GET_SESSION_ID,&m_session_id) == -1)
     {
-        DEBUG_PRINT("AUDIO_GET_SESSION_ID FAILED\n");
+        DEBUG_PRINT_ERROR("AUDIO_GET_SESSION_ID FAILED\n");
     }
     if(pcm_input)
     {
@@ -1346,7 +1350,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 {
                     if (ioctl(m_drv_fd, AUDIO_STOP, 0) == -1)
                     {
-                        DEBUG_PRINT("SCP:Idle->Loaded,ioctl stop failed %d\n",\
+                        DEBUG_PRINT_ERROR("SCP:Idle->Loaded,ioctl stop failed %d\n",\
                                     errno);
                     }
 
@@ -1372,38 +1376,38 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
 
                 if(ioctl(m_drv_fd, AUDIO_GET_STREAM_CONFIG, &drv_stream_config) == -1)
                 {
-                    DEBUG_PRINT("ioctl AUDIO_GET_STREAM_CONFIG failed, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_GET_STREAM_CONFIG failed, errno[%d]\n", errno);
                 }
                 if(ioctl(m_drv_fd, AUDIO_SET_STREAM_CONFIG, &drv_stream_config) == -1)
                 {
-                    DEBUG_PRINT("ioctl AUDIO_SET_STREAM_CONFIG failed, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_SET_STREAM_CONFIG failed, errno[%d]\n", errno);
                 }
 
                 if(ioctl(m_drv_fd, AUDIO_GET_QCELP_ENC_CONFIG, &drv_qcelp13_enc_config) == -1)
                 {
-                    DEBUG_PRINT("ioctl AUDIO_GET_QCELP_ENC_CONFIG failed, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_GET_QCELP_ENC_CONFIG failed, errno[%d]\n", errno);
                 }
         drv_qcelp13_enc_config.min_bit_rate = m_qcelp13_param.nMinBitRate;
         drv_qcelp13_enc_config.max_bit_rate = m_qcelp13_param.nMaxBitRate;
         if(ioctl(m_drv_fd, AUDIO_SET_QCELP_ENC_CONFIG, &drv_qcelp13_enc_config) == -1)
                 {
-                    DEBUG_PRINT("ioctl AUDIO_SET_QCELP_ENC_CONFIG failed, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_SET_QCELP_ENC_CONFIG failed, errno[%d]\n", errno);
                 }
                 if (ioctl(m_drv_fd, AUDIO_GET_BUF_CFG, &buf_cfg) == -1)
                 {
-                    DEBUG_PRINT("ioctl AUDIO_GET_BUF_CFG, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_GET_BUF_CFG, errno[%d]\n", errno);
                 }
                 buf_cfg.meta_info_enable = 1;
                 buf_cfg.frames_per_buf = NUMOFFRAMES;
                 if (ioctl(m_drv_fd, AUDIO_SET_BUF_CFG, &buf_cfg) == -1)
                 {
-                    DEBUG_PRINT("ioctl AUDIO_SET_BUF_CFG, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_SET_BUF_CFG, errno[%d]\n", errno);
                 }
                 if(pcm_input)
                 {
                     if (ioctl(m_drv_fd, AUDIO_GET_CONFIG, &pcm_cfg) == -1)
                     {
-                        DEBUG_PRINT("ioctl AUDIO_GET_CONFIG, errno[%d]\n", errno);
+                        DEBUG_PRINT_ERROR("ioctl AUDIO_GET_CONFIG, errno[%d]\n", errno);
                     }
                     pcm_cfg.channel_count = m_pcm_param.nChannels;
                     pcm_cfg.sample_rate  =  m_pcm_param.nSamplingRate;
@@ -1411,12 +1415,12 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
 
                     if (ioctl(m_drv_fd, AUDIO_SET_CONFIG, &pcm_cfg) == -1)
                     {
-                        DEBUG_PRINT("ioctl AUDIO_SET_CONFIG, errno[%d]\n", errno);
+                        DEBUG_PRINT_ERROR("ioctl AUDIO_SET_CONFIG, errno[%d]\n", errno);
                     }
                 }
                 if(ioctl(m_drv_fd, AUDIO_START, 0) == -1)
                 {
-                    DEBUG_PRINT("ioctl AUDIO_START failed, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_START failed, errno[%d]\n", errno);
                 }
                 DEBUG_PRINT("SCP-->Idle to Executing\n");
                 nState = eState;
@@ -1864,7 +1868,7 @@ bool omx_qcelp13_aenc::execute_omx_flush(OMX_IN OMX_U32 param1, bool cmd_cmpl)
                     OMX_CORE_OUTPUT_PORT_INDEX,OMX_COMPONENT_GENERATE_COMMAND);
         // Send Flush to the kernel so that the in and out buffers are released
         if (ioctl( m_drv_fd, AUDIO_FLUSH, 0) == -1)
-            DEBUG_PRINT("FLush:ioctl flush failed errno=%d\n",errno);
+            DEBUG_PRINT_ERROR("FLush:ioctl flush failed errno=%d\n",errno);
         DEBUG_DETAIL("****************************************");
         DEBUG_DETAIL("is_in_th_sleep=%d is_out_th_sleep=%d\n",\
                      is_in_th_sleep,is_out_th_sleep);
@@ -1918,7 +1922,7 @@ bool omx_qcelp13_aenc::execute_omx_flush(OMX_IN OMX_U32 param1, bool cmd_cmpl)
         post_input(OMX_CommandFlush,
                    OMX_CORE_INPUT_PORT_INDEX,OMX_COMPONENT_GENERATE_COMMAND);
         if (ioctl( m_drv_fd, AUDIO_FLUSH, 0) == -1)
-            DEBUG_PRINT("Flush:Input port, ioctl flush failed %d\n",errno);
+            DEBUG_PRINT_ERROR("Flush:Input port, ioctl flush failed %d\n",errno);
         DEBUG_DETAIL("****************************************");
         DEBUG_DETAIL("is_in_th_sleep=%d is_out_th_sleep=%d\n",\
                      is_in_th_sleep,is_out_th_sleep);
@@ -1966,7 +1970,7 @@ bool omx_qcelp13_aenc::execute_omx_flush(OMX_IN OMX_U32 param1, bool cmd_cmpl)
         post_output(OMX_CommandFlush,
                     OMX_CORE_OUTPUT_PORT_INDEX,OMX_COMPONENT_GENERATE_COMMAND);
         if (ioctl( m_drv_fd, AUDIO_FLUSH, 0) ==-1)
-            DEBUG_PRINT("Flush:Output port, ioctl flush failed %d\n",errno);
+            DEBUG_PRINT_ERROR("Flush:Output port, ioctl flush failed %d\n",errno);
         DEBUG_DETAIL("****************************************");
         DEBUG_DETAIL("is_in_th_sleep=%d is_out_th_sleep=%d\n",\
                      is_in_th_sleep,is_out_th_sleep);
@@ -3750,7 +3754,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::free_buffer(OMX_IN OMX_HANDLETYPE         hComp
         if (release_done(-1))
         {
             if(ioctl(m_drv_fd, AUDIO_STOP, 0) < 0)
-               DEBUG_PRINT("AUDIO STOP in free buffer failed\n");
+               DEBUG_PRINT_ERROR("AUDIO STOP in free buffer failed\n");
             else
                DEBUG_PRINT("AUDIO STOP in free buffer passed\n");
 
@@ -4111,7 +4115,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::component_deinit(OMX_IN OMX_HANDLETYPE hComp)
     }
   deinit_encoder();
 
-DEBUG_PRINT_ERROR("COMPONENT DEINIT...\n");
+DEBUG_PRINT_ERROR("%s:COMPONENT DEINIT...\n", __FUNCTION__);
   return OMX_ErrorNone;
 }
 
@@ -4208,7 +4212,7 @@ void  omx_qcelp13_aenc::deinit_encoder()
 
 
     if(ioctl(m_drv_fd, AUDIO_STOP, 0) <0)
-          DEBUG_PRINT("De-init: AUDIO_STOP FAILED\n");
+          DEBUG_PRINT_ERROR("De-init: AUDIO_STOP FAILED\n");
 
     if(pcm_input && m_tmp_meta_buf )
     {
