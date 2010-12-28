@@ -81,12 +81,12 @@ extern "C" {
 
 
 #define PrintFrameHdr(i,bufHdr) \
-                           DEBUG_PRINT("i=%d OMX bufHdr[%x]buf[%x]size[%d]TS[%ld]nFlags[0x%x]\n",\
+                           DEBUG_PRINT("i=%d OMX bufHdr[%x]buf[%x]size[%d]TS[%lld]nFlags[0x%x]\n",\
                            i,\
                            (unsigned) bufHdr,                                     \
                            (unsigned)((OMX_BUFFERHEADERTYPE *)bufHdr)->pBuffer,   \
                            (unsigned)((OMX_BUFFERHEADERTYPE *)bufHdr)->nFilledLen,\
-                           (unsigned)((OMX_BUFFERHEADERTYPE *)bufHdr)->nTimeStamp, \
+                           ((OMX_BUFFERHEADERTYPE *)bufHdr)->nTimeStamp, \
                            (unsigned)((OMX_BUFFERHEADERTYPE *)bufHdr)->nFlags)
 
 
@@ -328,7 +328,7 @@ private:
     {
         unsigned long LowPart;
         unsigned long HighPart;
-    };
+    }__attribute__((packed)) TIMESTAMP;
 
     typedef struct metadata_input
     {

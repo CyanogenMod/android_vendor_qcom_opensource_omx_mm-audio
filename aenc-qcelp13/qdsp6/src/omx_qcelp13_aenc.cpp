@@ -243,9 +243,11 @@ RETURN VALUE
 omx_qcelp13_aenc::omx_qcelp13_aenc(): m_tmp_meta_buf(NULL),
         m_tmp_out_meta_buf(NULL),
         m_flush_cnt(255),
+        m_comp_deinit(0),
         m_is_alloc_buf(0),
         m_app_data(NULL),
         m_drv_fd(-1),
+        bFlushinprogress(0),
         is_in_th_sleep(false),
         is_out_th_sleep(false),
         m_flags(0),
@@ -254,6 +256,8 @@ omx_qcelp13_aenc::omx_qcelp13_aenc(): m_tmp_meta_buf(NULL),
         m_out_act_buf_count (OMX_CORE_NUM_OUTPUT_BUFFERS),
         m_inp_current_buf_count(0),
         m_out_current_buf_count(0),
+        output_buffer_size(0),
+        input_buffer_size(0),
         m_inp_bEnabled(OMX_TRUE),
         m_out_bEnabled(OMX_TRUE),
         m_inp_bPopulated(OMX_FALSE),
@@ -262,11 +266,7 @@ omx_qcelp13_aenc::omx_qcelp13_aenc(): m_tmp_meta_buf(NULL),
         m_state(OMX_StateInvalid),
         m_ipc_to_in_th(NULL),
         m_ipc_to_out_th(NULL),
-        m_ipc_to_cmd_th(NULL),
-        m_comp_deinit(0),
-        bFlushinprogress(0),
-        output_buffer_size(0),
-        input_buffer_size(0)
+        m_ipc_to_cmd_th(NULL)
 {
     int cond_ret = 0;
     memset(&m_cmp, 0, sizeof(m_cmp));
@@ -474,13 +474,13 @@ void omx_qcelp13_aenc::frame_done_cb(OMX_BUFFERHEADERTYPE *bufHdr)
         m_qcelp13_pb_stats.fbd_cnt++;
         pthread_mutex_lock(&out_buf_count_lock);
         nNumOutputBuf--;
-        DEBUG_PRINT("FBD CB:: nNumOutputBuf=%d out_buf_len=%d\n",\
+        DEBUG_PRINT("FBD CB:: nNumOutputBuf=%d out_buf_len=%lu fbd_cnt=%lu\n",\
                     nNumOutputBuf,
                     m_qcelp13_pb_stats.tot_out_buf_len,
                     m_qcelp13_pb_stats.fbd_cnt);
         m_qcelp13_pb_stats.tot_out_buf_len += bufHdr->nFilledLen;
         m_qcelp13_pb_stats.tot_pb_time     = bufHdr->nTimeStamp;
-        DEBUG_PRINT("FBD:in_buf_len=%d out_buf_len=%d\n",
+        DEBUG_PRINT("FBD:in_buf_len=%lu out_buf_len=%lu\n",
                     m_qcelp13_pb_stats.tot_in_buf_len,
                     m_qcelp13_pb_stats.tot_out_buf_len);
 
@@ -1225,7 +1225,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::send_command(OMX_IN OMX_HANDLETYPE hComp,
     }
     post_command((unsigned)cmd,(unsigned)param1,OMX_COMPONENT_GENERATE_COMMAND);
     DEBUG_PRINT("Send Command : returns with OMX_ErrorNone \n");
-    DEBUG_PRINT("send_command : recieved state before semwait= %d\n",param1);
+    DEBUG_PRINT("send_command : recieved state before semwait= %lu\n",param1);
     sem_wait (&sem_States);
     DEBUG_PRINT("send_command : recieved state after semwait\n");
     return OMX_ErrorNone;
@@ -1250,7 +1250,6 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
     OMX_ERRORTYPE eRet = OMX_ErrorNone;
     //   Handle only IDLE and executing
     OMX_STATETYPE eState = (OMX_STATETYPE) param1;
-    int rc = 0;
     int bFlag = 1;
     nState = eState;
 
@@ -1368,7 +1367,6 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
             else if (OMX_StateExecuting == eState)
             {
 
-                struct msm_audio_config drv_config;
                 struct msm_audio_qcelp_enc_config drv_qcelp13_enc_config;
                 struct msm_audio_stream_config drv_stream_config;
                 struct msm_audio_buf_cfg buf_cfg;
@@ -1411,7 +1409,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                     }
                     pcm_cfg.channel_count = m_pcm_param.nChannels;
                     pcm_cfg.sample_rate  =  m_pcm_param.nSamplingRate;
-                    DEBUG_PRINT("pcm config %d %d\n",m_pcm_param.nChannels,m_pcm_param.nSamplingRate);
+                    DEBUG_PRINT("pcm config %lu %lu\n",m_pcm_param.nChannels,m_pcm_param.nSamplingRate);
 
                     if (ioctl(m_drv_fd, AUDIO_SET_CONFIG, &pcm_cfg) == -1)
                     {
@@ -1660,7 +1658,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
     } else if (OMX_CommandFlush == cmd)
     {
         DEBUG_DETAIL("*************************\n");
-        DEBUG_PRINT("SCP-->RXED FLUSH COMMAND port=%d\n",param1);
+        DEBUG_PRINT("SCP-->RXED FLUSH COMMAND port=%lu\n",param1);
         DEBUG_DETAIL("*************************\n");
         bFlag = 0;
         if ( param1 == OMX_CORE_INPUT_PORT_INDEX ||
@@ -1687,7 +1685,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 DEBUG_PRINT("send_command_proxy:OMX_CommandPortDisable:\
                             OMX_CORE_INPUT_PORT_INDEX:release_done \n");
                 DEBUG_PRINT("************* OMX_CommandPortDisable:\
-                            m_inp_bEnabled********\n",m_inp_bEnabled);
+                            m_inp_bEnabled=%d********\n",m_inp_bEnabled);
 
                 post_command(OMX_CommandPortDisable,
                              OMX_CORE_INPUT_PORT_INDEX,
@@ -1699,7 +1697,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 if (m_state == OMX_StatePause ||m_state == OMX_StateExecuting)
                 {
                     DEBUG_PRINT("SCP: execute_omx_flush in Disable in "\
-                                " param1=%d m_state=%d \n",param1, m_state);
+                                " param1=%lu m_state=%d \n",param1, m_state);
                     execute_omx_flush(param1);
                 }
                 DEBUG_PRINT("send_command_proxy:OMX_CommandPortDisable:\
@@ -1721,7 +1719,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 DEBUG_PRINT("send_command_proxy:OMX_CommandPortDisable:\
                             OMX_CORE_OUTPUT_PORT_INDEX:release_done \n");
                 DEBUG_PRINT("************* OMX_CommandPortDisable:\
-                            m_out_bEnabled********\n",m_inp_bEnabled);
+                            m_out_bEnabled=%d********\n",m_inp_bEnabled);
 
                 post_command(OMX_CommandPortDisable,
                              OMX_CORE_OUTPUT_PORT_INDEX,
@@ -1731,7 +1729,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 if (m_state == OMX_StatePause ||m_state == OMX_StateExecuting)
                 {
                     DEBUG_PRINT("SCP: execute_omx_flush in Disable out "\
-                                "param1=%d m_state=%d \n",param1, m_state);
+                                "param1=%lu m_state=%d \n",param1, m_state);
                     execute_omx_flush(param1);
                 }
                 BITMASK_SET(&m_flags, OMX_COMPONENT_OUTPUT_DISABLE_PENDING);
@@ -1848,7 +1846,7 @@ bool omx_qcelp13_aenc::execute_omx_flush(OMX_IN OMX_U32 param1, bool cmd_cmpl)
 {
     bool bRet = true;
 
-    DEBUG_PRINT("Execute_omx_flush Port[%d]", param1);
+    DEBUG_PRINT("Execute_omx_flush Port[%lu]", param1);
     struct timespec abs_timeout;
     abs_timeout.tv_sec = 1;
     abs_timeout.tv_nsec = 0;
@@ -1898,7 +1896,7 @@ bool omx_qcelp13_aenc::execute_omx_flush(OMX_IN OMX_U32 param1, bool cmd_cmpl)
         DEBUG_DETAIL("WAITING FOR FLUSH ACK's param1=%d",param1);
         wait_for_event();
 
-        DEBUG_PRINT("RECIEVED BOTH FLUSH ACK's param1=%d cmd_cmpl=%d",\
+        DEBUG_PRINT("RECIEVED BOTH FLUSH ACK's param1=%lu cmd_cmpl=%d",\
                     param1,cmd_cmpl);
 
         // If not going to idle state, Send FLUSH complete message to the Client,
@@ -2005,7 +2003,7 @@ bool omx_qcelp13_aenc::execute_omx_flush(OMX_IN OMX_U32 param1, bool cmd_cmpl)
         DEBUG_DETAIL("RECIEVED FLUSH ACK FOR O/P PORT param1=%d",param1);
     } else
     {
-        DEBUG_PRINT("Invalid Port ID[%d]",param1);
+        DEBUG_PRINT("Invalid Port ID[%lu]",param1);
     }
     return bRet;
 }
@@ -2380,7 +2378,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 portDefn = (OMX_PARAM_PORTDEFINITIONTYPE *) paramData;
 
                 DEBUG_PRINT("OMX_IndexParamPortDefinition " \
-                            "portDefn->nPortIndex = %d\n",portDefn->nPortIndex);
+                            "portDefn->nPortIndex = %lu\n",portDefn->nPortIndex);
 
                 portDefn->nVersion.nVersion = OMX_SPEC_VERSION;
                 portDefn->nSize = sizeof(portDefn);
@@ -2448,7 +2446,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 } else if (OMX_CORE_OUTPUT_PORT_INDEX== portFormatType->nPortIndex)
                 {
                     DEBUG_PRINT("get_parameter: OMX_IndexParamAudioFormat: "\
-                                "%d\n", portFormatType->nIndex);
+                                "%lu\n", portFormatType->nIndex);
 
             portFormatType->eEncoding = OMX_AUDIO_CodingQCELP13;
                 } else
@@ -2495,9 +2493,9 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 {
                     memcpy(pcmparam,&m_pcm_param,\
                         sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
-                    DEBUG_PRINT("get_parameter: Sampling rate %d",\
+                    DEBUG_PRINT("get_parameter: Sampling rate %lu",\
                                  pcmparam->nSamplingRate);
-                    DEBUG_PRINT("get_parameter: Number of channels %d",\
+                    DEBUG_PRINT("get_parameter: Number of channels %lu",\
                                  pcmparam->nChannels);
                 } else
                 {
@@ -2511,6 +2509,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
         case OMX_IndexParamComponentSuspended:
         {
             OMX_PARAM_SUSPENSIONTYPE *suspend= (OMX_PARAM_SUSPENSIONTYPE *) paramData;
+            DEBUG_PRINT("get_parameter: OMX_IndexParamComponentSuspended %p\n", suspend);
             break;
         }
         case OMX_IndexParamVideoInit:
@@ -2656,7 +2655,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                     return OMX_ErrorIncorrectStateOperation;
                 }
                 DEBUG_PRINT("OMX_IndexParamPortDefinition portDefn->nPortIndex "
-                            "= %d\n",portDefn->nPortIndex);
+                            "= %lu\n",portDefn->nPortIndex);
                 if (OMX_CORE_INPUT_PORT_INDEX == portDefn->nPortIndex)
                 {
                     if ( portDefn->nBufferCountActual > OMX_CORE_NUM_INPUT_BUFFERS )
@@ -2697,10 +2696,10 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 }
                 OMX_PRIORITYMGMTTYPE *priorityMgmtype
                 = (OMX_PRIORITYMGMTTYPE*) paramData;
-                DEBUG_PRINT("set_parameter: OMX_IndexParamPriorityMgmt %d\n",
+                DEBUG_PRINT("set_parameter: OMX_IndexParamPriorityMgmt %lu\n",
                             priorityMgmtype->nGroupID);
 
-                DEBUG_PRINT("set_parameter: priorityMgmtype %d\n",
+                DEBUG_PRINT("set_parameter: priorityMgmtype %lu\n",
                             priorityMgmtype->nGroupPriority);
 
                 m_priority_mgm.nGroupID = priorityMgmtype->nGroupID;
@@ -2721,7 +2720,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 } else if (OMX_CORE_OUTPUT_PORT_INDEX == portFormatType->nPortIndex)
                 {
                     DEBUG_PRINT("set_parameter: OMX_IndexParamAudioFormat:"\
-                                " %d\n", portFormatType->nIndex);
+                                " %lu\n", portFormatType->nIndex);
                     portFormatType->eEncoding = OMX_AUDIO_CodingQCELP13;
                 } else
                 {
@@ -2765,7 +2764,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 {
                     memcpy(&m_pcm_param,pcmparam,\
                         sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
-                    DEBUG_PRINT("set_pcm_parameter: %d %d",\
+                    DEBUG_PRINT("set_pcm_parameter: %lu %lu",\
                                  m_pcm_param.nChannels,m_pcm_param.nSamplingRate);
                 } else
                 {
@@ -3129,7 +3128,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::allocate_input_buffer
         m_input_buf_hdrs.insert(bufHdr, NULL);
 
         m_inp_current_buf_count++;
-        DEBUG_PRINT("AIB:bufHdr %x bufHdr->pBuffer %x m_inp_buf_cnt=%d bytes=%d", \
+        DEBUG_PRINT("AIB:bufHdr %p bufHdr->pBuffer %p m_inp_buf_cnt=%d bytes=%lu", \
                     bufHdr, bufHdr->pBuffer,m_inp_current_buf_count,
                     bytes);
 
@@ -3184,8 +3183,8 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::allocate_output_buffer
             bufHdr->nOutputPortIndex   = OMX_CORE_OUTPUT_PORT_INDEX;
             m_output_buf_hdrs.insert(bufHdr, NULL);
             m_out_current_buf_count++;
-            DEBUG_PRINT("AOB::bufHdr %x bufHdr->pBuffer %x m_out_buf_cnt=%d "\
-                        "bytes=%d",bufHdr, bufHdr->pBuffer,\
+            DEBUG_PRINT("AOB::bufHdr %p bufHdr->pBuffer %p m_out_buf_cnt=%d "\
+                        "bytes=%lu",bufHdr, bufHdr->pBuffer,\
                         m_out_current_buf_count, bytes);
         } else
         {
@@ -3400,7 +3399,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::use_buffer
         }
     }
   }
-    DEBUG_PRINT("Use Buffer for port[%d] eRet[%d]\n", port,eRet);
+    DEBUG_PRINT("Use Buffer for port[%lu] eRet[%d]\n", port,eRet);
     return eRet;
 }
 /*=============================================================================
@@ -3464,7 +3463,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::use_input_buffer
             memset(bufHdr,0,sizeof(OMX_BUFFERHEADERTYPE));
 
             bufHdr->pBuffer           = (OMX_U8 *)(buffer);
-            DEBUG_PRINT("use_input_buffer:bufHdr %x bufHdr->pBuffer %x bytes=%d", \
+            DEBUG_PRINT("use_input_buffer:bufHdr %p bufHdr->pBuffer %p bytes=%lu", \
                         bufHdr, bufHdr->pBuffer,bytes);
             bufHdr->nSize             = sizeof(OMX_BUFFERHEADERTYPE);
             bufHdr->nVersion.nVersion = OMX_SPEC_VERSION;
@@ -3553,7 +3552,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::use_output_buffer
             memset(bufHdr,0,sizeof(OMX_BUFFERHEADERTYPE));
 
             bufHdr->pBuffer           = (OMX_U8 *)(buffer);
-            DEBUG_PRINT("use_output_buffer:bufHdr %x bufHdr->pBuffer %x len=%d",
+            DEBUG_PRINT("use_output_buffer:bufHdr %p bufHdr->pBuffer %p len=%lu",
                         bufHdr, bufHdr->pBuffer,bytes);
             bufHdr->nSize             = sizeof(OMX_BUFFERHEADERTYPE);
             bufHdr->nVersion.nVersion = OMX_SPEC_VERSION;
@@ -3639,7 +3638,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::free_buffer(OMX_IN OMX_HANDLETYPE         hComp
 {
     OMX_ERRORTYPE eRet = OMX_ErrorNone;
 
-    DEBUG_PRINT("Free_Buffer buf %x\n", buffer);
+    DEBUG_PRINT("Free_Buffer buf %p\n", buffer);
     if(hComp == NULL)
     {
         DEBUG_PRINT_ERROR("Returning OMX_ErrorBadParameter\n");
@@ -3652,7 +3651,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::free_buffer(OMX_IN OMX_HANDLETYPE         hComp
     } else if ((m_inp_bEnabled == OMX_FALSE && port == OMX_CORE_INPUT_PORT_INDEX)||
                (m_out_bEnabled == OMX_FALSE && port == OMX_CORE_OUTPUT_PORT_INDEX))
     {
-        DEBUG_PRINT("Free Buffer while port %d disabled\n", port);
+        DEBUG_PRINT("Free Buffer while port %lu disabled\n", port);
     } else if (m_state == OMX_StateExecuting || m_state == OMX_StatePause)
     {
         DEBUG_PRINT("Invalid state to free buffer,ports need to be disabled:\
@@ -3791,7 +3790,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::empty_this_buffer(OMX_IN OMX_HANDLETYPE        
 {
     OMX_ERRORTYPE eRet = OMX_ErrorNone;
 
-    DEBUG_PRINT("ETB:Buf:%x Len %d TS %d numInBuf=%d\n", \
+    DEBUG_PRINT("ETB:Buf:%p Len %lu TS %lld numInBuf=%d\n", \
                 buffer, buffer->nFilledLen, buffer->nTimeStamp, (nNumInputBuf));
     if (m_state == OMX_StateInvalid)
     {
@@ -3859,8 +3858,6 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::empty_this_buffer_proxy
     META_IN meta_in;
     //Pointer to the starting location of the data to be transcoded
     OMX_U8 *srcStart;
-    //The data consumed from the buffer that holds the data to be transcoded
-    OMX_U32 srcDataConsumed = 0;
     //The total length of the data to be transcoded
     srcStart = buffer->pBuffer;
     OMX_U8 *data = NULL;
@@ -3907,7 +3904,7 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::empty_this_buffer_proxy
     {
         /* Assume empty this buffer function has already checked
         validity of buffer */
-        DEBUG_PRINT("Empty buffer %x to kernel driver\n", buffer);
+        DEBUG_PRINT("Empty buffer %p to kernel driver\n", buffer);
         post_input((unsigned) & hComp,(unsigned) buffer,
                    OMX_COMPONENT_GENERATE_BUFFER_DONE);
     }
@@ -3919,12 +3916,9 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::fill_this_buffer_proxy
     OMX_IN OMX_HANDLETYPE         hComp,
     OMX_BUFFERHEADERTYPE* buffer)
 {
-    int byte_count = 0;
-    int nDatalen = 0;
     OMX_STATETYPE state;
     ENC_META_OUT *meta_out = NULL;
     int nReadbytes = 0;
-    OMX_U8 *src = buffer->pBuffer;
 
     pthread_mutex_lock(&m_state_lock);
     get_state(&m_cmp, &state);
@@ -3952,12 +3946,12 @@ OMX_ERRORTYPE  omx_qcelp13_aenc::fill_this_buffer_proxy
       // Frame Size * Nr of frame =>
 
       meta_out = (ENC_META_OUT *)(buffer->pBuffer + sizeof(unsigned char));
-          buffer->nTimeStamp = ((meta_out->msw_ts << 32)+ meta_out->lsw_ts);
+          buffer->nTimeStamp = (((OMX_TICKS)meta_out->msw_ts << 32)+ meta_out->lsw_ts);
           buffer->nFlags |= meta_out->nflags;
           buffer->nOffset =  meta_out->offset_to_frame + sizeof(unsigned char);
           buffer->nFilledLen = nReadbytes - buffer->nOffset;
           nTimestamp = buffer->nTimeStamp;
-          DEBUG_PRINT("nflags %d frame_size %d offset_to_frame %d timestamp %d\n",\
+          DEBUG_PRINT("nflags %d frame_size %d offset_to_frame %d timestamp %lld\n",\
             meta_out->nflags, meta_out->frame_size, meta_out->offset_to_frame,
             buffer->nTimeStamp);
 
@@ -4137,11 +4131,11 @@ void  omx_qcelp13_aenc::deinit_encoder()
 {
     DEBUG_PRINT("Component-deinit being processed\n");
     DEBUG_PRINT("********************************\n");
-    DEBUG_PRINT("STATS: in-buf-len[%d]out-buf-len[%d] tot-pb-time[%ld]",\
+    DEBUG_PRINT("STATS: in-buf-len[%lu]out-buf-len[%lu] tot-pb-time[%ld]",\
                 m_qcelp13_pb_stats.tot_in_buf_len,
                 m_qcelp13_pb_stats.tot_out_buf_len,
                 m_qcelp13_pb_stats.tot_pb_time);
-    DEBUG_PRINT("STATS: fbd-cnt[%d]ftb-cnt[%d]etb-cnt[%d]ebd-cnt[%d]",\
+    DEBUG_PRINT("STATS: fbd-cnt[%lu]ftb-cnt[%lu]etb-cnt[%lu]ebd-cnt[%lu]",\
                 m_qcelp13_pb_stats.fbd_cnt,m_qcelp13_pb_stats.ftb_cnt,
                 m_qcelp13_pb_stats.etb_cnt,
                 m_qcelp13_pb_stats.ebd_cnt);

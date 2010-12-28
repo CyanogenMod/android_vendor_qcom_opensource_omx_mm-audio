@@ -73,8 +73,7 @@ void *omx_aac_msg(void *info)
 void *omx_aac_events(void *info)
 {
     struct aac_ipc_info *aac_info = (struct aac_ipc_info*)info;
-    unsigned char id;
-    int n;
+    unsigned char id = 0;
 
     DEBUG_DETAIL("%s: message thread start\n", aac_info->thread_name);
     aac_info->process_msg_cb(aac_info->client_data, id);

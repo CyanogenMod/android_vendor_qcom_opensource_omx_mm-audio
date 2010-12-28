@@ -179,8 +179,6 @@ OMX_ERRORTYPE error;
 
 #define FORMAT_PCM 1
 
-static bFileclose = 0;
-
 struct wav_header {
   uint32_t riff_id;
   uint32_t riff_sz;
@@ -226,14 +224,6 @@ int bFlushing = false;
 int bPause    = false;
 const char *in_filename;
 const char *out_filename;
-
-
-static int pcm_play(unsigned rate, unsigned channels,
-                    int (*fill)(void *buf, unsigned sz, void *cookie),
-                    void *cookie);
-
-static char *next;
-static unsigned avail;
 
 int timeStampLfile = 0;
 int timestampInterval = 100;
@@ -326,10 +316,14 @@ OMX_ERRORTYPE EventHandler(OMX_IN OMX_HANDLETYPE hComponent,
                            OMX_IN OMX_PTR pEventData)
 {
     DEBUG_PRINT("Function %s \n", __FUNCTION__);
+    /* To remove warning for unused variable to keep prototype same */
+    (void)hComponent;
+    (void)pAppData;
+    (void)pEventData;
 
     switch(eEvent) {
         case OMX_EventCmdComplete:
-        DEBUG_PRINT("\n OMX_EventCmdComplete event=%d data1=%d data2=%d\n",(OMX_EVENTTYPE)eEvent,
+        DEBUG_PRINT("\n OMX_EventCmdComplete event=%d data1=%lu data2=%lu\n",(OMX_EVENTTYPE)eEvent,
                                                                                nData1,nData2);
             event_complete();
         break;
@@ -355,21 +349,16 @@ OMX_ERRORTYPE FillBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
                               OMX_IN OMX_PTR pAppData,
                               OMX_IN OMX_BUFFERHEADERTYPE* pBuffer)
 {
-    int bytes_read=0;
-    int bytes_writen = 0;
+    size_t bytes_writen = 0;
     int total_bytes_writen = 0;
-    static unsigned int  count = 0;
-    static unsigned int tcount = 0;
-    static unsigned int taudcount = 0;
-    static unsigned int tlen = 0;
-    pthread_t thread;
-    int r = 0;
-    unsigned char readBuf;
-    static int releaseCount = 0;
     unsigned int len = 0;
     struct enc_meta_out *meta = NULL;
     OMX_U8 *src = pBuffer->pBuffer;
     unsigned int num_of_frames = 1;
+
+    /* To remove warning for unused variable to keep prototype same */
+    (void)pAppData;
+
         if(((pBuffer->nFlags & OMX_BUFFERFLAG_EOS) == OMX_BUFFERFLAG_EOS)) {
             DEBUG_PRINT("FBD::EOS on output port\n ");
             bOutputEosReached = true;
@@ -433,6 +422,9 @@ OMX_ERRORTYPE EmptyBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
                               OMX_IN OMX_BUFFERHEADERTYPE* pBuffer)
 {
     int readBytes =0;
+
+    /* To remove warning for unused variable to keep prototype same */
+    (void)pAppData;
 
     ebd_cnt++;
     used_ip_buf_cnt--;
@@ -510,11 +502,6 @@ int main(int argc, char **argv)
      OMX_ERRORTYPE result;
 
     struct sigaction sa;
-    unsigned char tmp;
-
-
-    struct wav_header hdr;
-    int bytes_writen = 0;
 
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = &signal_handler;
@@ -579,7 +566,7 @@ int main(int argc, char **argv)
             wait_for_event();
         }
 
-        if((bInputEosReached_tunnel || (bOutputEosReached) && !tunnel))
+        if((bInputEosReached_tunnel) || ((bOutputEosReached) && !tunnel))
         {
 
             DEBUG_PRINT("\nMoving the decoder to idle state \n");
@@ -641,8 +628,7 @@ int main(int argc, char **argv)
 
 void Release_Encoder()
 {
-    static cnt=0;
-    int bufCnt=0;
+    static int cnt=0;
     OMX_ERRORTYPE result;
 
     DEBUG_PRINT("END OF AAC ENCODING: EXITING PLEASE WAIT\n");
@@ -679,15 +665,12 @@ int Init_Encoder(OMX_STRING audio_component)
     DEBUG_PRINT("Inside %s \n", __FUNCTION__);
     OMX_ERRORTYPE omxresult;
     OMX_U32 total = 0;
-    OMX_U8** audCompNames;
     typedef OMX_U8* OMX_U8_PTR;
     char *role ="audio_encoder";
 
     static OMX_CALLBACKTYPE call_back = {
         &EventHandler,&EmptyBufferDone,&FillBufferDone
     };
-
-    int i = 0;
 
     /* Init. the OpenMAX Core */
     DEBUG_PRINT("\nInitializing OpenMAX Core....\n");
@@ -704,7 +687,7 @@ int Init_Encoder(OMX_STRING audio_component)
     /* Query for audio decoders*/
     DEBUG_PRINT("Aac_test: Before entering OMX_GetComponentOfRole");
     OMX_GetComponentsOfRole(role, &total, 0);
-    DEBUG_PRINT ("\nTotal components of role=%s :%d", role, total);
+    DEBUG_PRINT ("\nTotal components of role=%s :%lu", role, total);
 
 
     omxresult = OMX_GetHandle((OMX_HANDLETYPE*)(&aac_enc_handle),
@@ -729,8 +712,8 @@ int Init_Encoder(OMX_STRING audio_component)
     }
     else
     {
-        DEBUG_PRINT("\nportParam.nPorts:%d\n", portParam.nPorts);
-    DEBUG_PRINT("\nportParam.nStartPortNumber:%d\n",
+        DEBUG_PRINT("\nportParam.nPorts:%lu\n", portParam.nPorts);
+    DEBUG_PRINT("\nportParam.nStartPortNumber:%lu\n",
                                              portParam.nStartPortNumber);
     }
 
@@ -755,8 +738,7 @@ int Play_Encoder()
     int Size=0;
     DEBUG_PRINT("Inside %s \n", __FUNCTION__);
     OMX_ERRORTYPE ret;
-    OMX_STATETYPE state;
-    OMX_U32 index;
+    OMX_INDEXTYPE index;
     DEBUG_PRINT("sizeof[%d]\n", sizeof(OMX_BUFFERHEADERTYPE));
 
     /* open the i/p and o/p files based on the video file format passed */
@@ -772,8 +754,8 @@ int Play_Encoder()
     inputportFmt.nPortIndex = portParam.nStartPortNumber;
 
     OMX_GetParameter(aac_enc_handle,OMX_IndexParamPortDefinition,&inputportFmt);
-    DEBUG_PRINT ("\nEnc Input Buffer Count %d\n", inputportFmt.nBufferCountMin);
-    DEBUG_PRINT ("\nEnc: Input Buffer Size %d\n", inputportFmt.nBufferSize);
+    DEBUG_PRINT ("\nEnc Input Buffer Count %lu\n", inputportFmt.nBufferCountMin);
+    DEBUG_PRINT ("\nEnc: Input Buffer Size %lu\n", inputportFmt.nBufferSize);
 
     if(OMX_DirInput != inputportFmt.eDir) {
         DEBUG_PRINT ("\nEnc: Expect Input Port\n");
@@ -792,8 +774,8 @@ int Play_Encoder()
     outputportFmt.nPortIndex = portParam.nStartPortNumber + 1;
 
     OMX_GetParameter(aac_enc_handle,OMX_IndexParamPortDefinition,&outputportFmt);
-    DEBUG_PRINT ("\nEnc: Output Buffer Count %d\n", outputportFmt.nBufferCountMin);
-    DEBUG_PRINT ("\nEnc: Output Buffer Size %d\n", outputportFmt.nBufferSize);
+    DEBUG_PRINT ("\nEnc: Output Buffer Count %lu\n", outputportFmt.nBufferCountMin);
+    DEBUG_PRINT ("\nEnc: Output Buffer Size %lu\n", outputportFmt.nBufferSize);
 
     if(OMX_DirOutput != outputportFmt.eDir) {
         DEBUG_PRINT ("\nEnc: Expect Output Port\n");
@@ -952,12 +934,14 @@ static OMX_ERRORTYPE Allocate_Buffer ( OMX_COMPONENTTYPE *avc_enc_handle,
     DEBUG_PRINT("Inside %s \n", __FUNCTION__);
     OMX_ERRORTYPE error=OMX_ErrorNone;
     long bufCnt=0;
+    /* To remove warning for unused variable to keep prototype same */
+    (void)avc_enc_handle;
 
     *pBufHdrs= (OMX_BUFFERHEADERTYPE **)
                    malloc(sizeof(OMX_BUFFERHEADERTYPE*)*bufCntMin);
 
     for(bufCnt=0; bufCnt < bufCntMin; ++bufCnt) {
-        DEBUG_PRINT("\n OMX_AllocateBuffer No %d \n", bufCnt);
+        DEBUG_PRINT("\n OMX_AllocateBuffer No %ld \n", bufCnt);
         error = OMX_AllocateBuffer(aac_enc_handle, &((*pBufHdrs)[bufCnt]),
                                    nPortIndex, NULL, bufSize);
     }
@@ -1006,7 +990,7 @@ static int open_audio_file ()
     {
         DEBUG_PRINT("Inside %s filename=%s\n", __FUNCTION__, in_filename);
         inputBufferFile = fopen (in_filename, "rb");
-        if (inputBufferFile < 0) {
+        if (inputBufferFile == NULL) {
             DEBUG_PRINT("\ni/p file %s could NOT be opened\n",
                                          in_filename);
         error_code = -1;
@@ -1020,7 +1004,7 @@ static int open_audio_file ()
 
     DEBUG_PRINT("Inside %s filename=%s\n", __FUNCTION__, out_filename);
     outputBufferFile = fopen (out_filename, "wb");
-    if (outputBufferFile < 0) {
+    if (outputBufferFile == NULL) {
         DEBUG_PRINT("\ni/p file %s could NOT be opened\n",
                                          out_filename);
     error_code = -1;
@@ -1239,7 +1223,6 @@ void audaac_rec_install_adts_header_variable (uint16  byte_num)
 static OMX_ERRORTYPE parse_pcm_header()
 {
     struct wav_header hdr;
-    uint32_t data_size, id_data;
 
     DEBUG_PRINT("\n***************************************************************\n");
     if(fread(&hdr, 1, sizeof(hdr),inputBufferFile)!=sizeof(hdr))

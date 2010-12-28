@@ -73,8 +73,7 @@ void *omx_qcelp13_msg(void *info)
 void *omx_qcelp13_events(void *info)
 {
     struct qcelp13_ipc_info *qcelp13_info = (struct qcelp13_ipc_info*)info;
-    unsigned char id;
-    int n;
+    unsigned char id = 0;
 
     DEBUG_DETAIL("%s: message thread start\n", qcelp13_info->thread_name);
     qcelp13_info->process_msg_cb(qcelp13_info->client_data, id);

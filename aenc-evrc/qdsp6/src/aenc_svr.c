@@ -73,8 +73,7 @@ void *omx_evrc_msg(void *info)
 void *omx_evrc_events(void *info)
 {
     struct evrc_ipc_info *evrc_info = (struct evrc_ipc_info*)info;
-    unsigned char id;
-    int n;
+    unsigned char id = 0;
 
     DEBUG_DETAIL("%s: message thread start\n", evrc_info->thread_name);
     evrc_info->process_msg_cb(evrc_info->client_data, id);

@@ -73,8 +73,7 @@ void *omx_amr_msg(void *info)
 void *omx_amr_events(void *info)
 {
     struct amr_ipc_info *amr_info = (struct amr_ipc_info*)info;
-    unsigned char id;
-    int n;
+    unsigned char id = 0;
 
     DEBUG_DETAIL("%s: message thread start\n", amr_info->thread_name);
     amr_info->process_msg_cb(amr_info->client_data, id);
