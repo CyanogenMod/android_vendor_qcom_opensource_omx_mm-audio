@@ -229,10 +229,6 @@ struct adec_appdata
 
 struct adec_appdata adec_mp3_inst1;
 
-static int pcm_play(unsigned rate, unsigned channels,
-                    int (*fill)(void *buf, unsigned sz, void *cookie),
-                    void *cookie);
-
 //* OMX Spec Version supported by the wrappers. Version = 1.1 */
 const OMX_U32 CURRENT_OMX_SPEC_VERSION = 0x00000101;
 
@@ -273,6 +269,7 @@ static OMX_ERRORTYPE EmptyBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
 static OMX_ERRORTYPE FillBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
                                      OMX_IN OMX_PTR pAppData,
                                      OMX_IN OMX_BUFFERHEADERTYPE* pBuffer);
+void write_devctlcmd(int fd, const void *buf, int param);
 
 void adec_appdata_init(struct adec_appdata* adec_appdata)
 {
@@ -347,10 +344,9 @@ void event_complete(struct adec_appdata * adec_appdata)
    pthread_mutex_unlock(&adec_appdata->lock);
 }
 
-void process_hpcm_drv_events( void* data)
+void *process_hpcm_drv_events( void* data)
 {
     struct adec_appdata *adec_data = (struct adec_appdata *)data;
-    int rc = 0, buf_count = 0;
     hpcm_info ftb;
 
     int n=0;
@@ -367,7 +363,7 @@ void process_hpcm_drv_events( void* data)
             DEBUG_PRINT("*********************\n");
             DEBUG_PRINT("KILLING HPCM THREAD...\n");
             DEBUG_PRINT("***********************\n");
-            return 0;
+            return (void*) -1;
         }
         if(p.msg_type == CTRL)
         {
@@ -389,7 +385,7 @@ void process_hpcm_drv_events( void* data)
         {
             DEBUG_PRINT_ERROR("%s: Write data to PCM failed\n",__FUNCTION__);
         }
-        DEBUG_PRINT("drvfd=%d bufHdr[%p] buffer[%p] len[%d] hComponent[%p] bOutputEos=%d\n",
+        DEBUG_PRINT("drvfd=%d bufHdr[%p] buffer[%p] len[%lu] hComponent[%p] bOutputEos=%d\n",
                                           adec_data->m_pcmdrv_fd,
                                           ftb.bufHdr,ftb.bufHdr->pBuffer,
                                           ftb.bufHdr->nFilledLen,
@@ -398,7 +394,7 @@ void process_hpcm_drv_events( void* data)
             OMX_FillThisBuffer(ftb.hComponent,ftb.bufHdr);
         }
     }
-    return ;
+    return 0;
 }
 
 /* Thread for handling the events from PCM_DEC driver */
@@ -489,6 +485,10 @@ OMX_ERRORTYPE EventHandler(OMX_IN OMX_HANDLETYPE hComponent,
    //DEBUG_PRINT("Function %s \n command %d  Event complete %d", __FUNCTION__,(OMX_COMMANDTYPE)nData1,nData2);
    int bufCnt=0;
    struct adec_appdata* adec_appdata;
+    /* To remove warning for unused variable to keep prototype same */
+   (void)hComponent;
+   (void)pEventData;
+
    if(NULL != pAppData)
        adec_appdata = (struct adec_appdata*) pAppData;
    else
@@ -593,7 +593,6 @@ OMX_ERRORTYPE FillBufferDone(OMX_IN OMX_HANDLETYPE          hComponent,
 {
     struct msm_audio_aio_buf audio_aio_buf;
     unsigned int i=0;
-    int bytes_read=0;
     int bytes_writen = 0;
     struct msm_audio_config drv_pcm_config;
     struct adec_appdata* adec_appdata;
@@ -1068,12 +1067,12 @@ adec_mp3_inst1.control=0;
          if (msm_route_stream(1, adec_mp3_inst->session_id, adec_mp3_inst->device_id, 0))
          {
             DEBUG_PRINT("\ncould not set stream routing\n");
-            return -1;
+            return (void *)-1;
          }
          if (msm_en_device(adec_mp3_inst->device_id, 0))
          {
             DEBUG_PRINT("\ncould not enable device\n");
-            return -1;
+            return (void *)-1;
          }
          msm_mixer_close();
        }
@@ -1092,7 +1091,6 @@ adec_mp3_inst1.control=0;
 
 int main(int argc, char **argv)
 {
-    OMX_ERRORTYPE result;
     struct sigaction sa;
     pthread_t thread1_id;
     int thread1_ret=0;
@@ -1168,8 +1166,6 @@ int Init_Decoder(struct adec_appdata* adec_appdata)
    DEBUG_PRINT("Inside %s \n", __FUNCTION__);
    OMX_ERRORTYPE omxresult;
    OMX_U32 total = 0;
-   int i = 0;
-   OMX_U8** audCompNames;
    typedef OMX_U8* OMX_U8_PTR;
    char *role ="audio_decoder.mp3";
 
@@ -1239,9 +1235,7 @@ int Play_Decoder(struct adec_appdata* adec_appdata)
    int Size=0;
    DEBUG_PRINT("Inside %s \n", __FUNCTION__);
    OMX_ERRORTYPE ret;
-   OMX_STATETYPE state;
-   OMX_U32 index;
-   int bufCnt=0;
+   OMX_INDEXTYPE index;
    #ifdef PCM_PLAYBACK
    struct msm_audio_config drv_pcm_config;
    #endif  // PCM_PLAYBACK
@@ -1545,7 +1539,7 @@ unsigned int extract_id3_header_size(OMX_U8* buffer)
 OMX_ERRORTYPE  parse_mp3_frameheader(OMX_BUFFERHEADERTYPE* buffer,
                                      struct mp3_header *header)
 {
-    OMX_U8* temp_pBuf1 = NULL,*pBuf1;
+    OMX_U8* temp_pBuf1 = NULL;
     unsigned int i = 0;
     unsigned int id3_size = 0;
     OMX_U8 temp;
@@ -1984,7 +1978,6 @@ static int Read_Buffer (OMX_BUFFERHEADERTYPE  *pBufHdr,FILE* inputBufferFile)
 static int open_audio_file (struct adec_appdata* adec_appdata)
 {
    int error_code = 0;
-   const char *outfilename = "Audio_mp3.pcm";
    struct wav_header hdr;
    int header_len = 0;
    memset(&hdr,0,sizeof(hdr));
@@ -2016,7 +2009,7 @@ static int open_audio_file (struct adec_appdata* adec_appdata)
       adec_appdata->outputBufferFile = fopen(adec_appdata->out_filename,"wb");
       if (adec_appdata->outputBufferFile == NULL) {
          DEBUG_PRINT("\no/p file %s could NOT be opened\n",
-                       outfilename);
+                       adec_appdata->out_filename);
          error_code = -1;
       }
 
@@ -2092,7 +2085,7 @@ void process_portreconfig(struct adec_appdata* adec_appdata)
              if (adec_appdata->error != OMX_ErrorNone)
              {
                  DEBUG_PRINT ("\nOMX_UseBuffer Output buffer error\n");
-                 return -1;
+                 return;
              }
              else
              {
@@ -2106,7 +2099,7 @@ void process_portreconfig(struct adec_appdata* adec_appdata)
                  adec_appdata->outputportFmt.nPortIndex);
              if (adec_appdata->error != OMX_ErrorNone) {
                DEBUG_PRINT ("\nOMX_AllocateBuffer Output buffer error output_buf_cnt=%d\n",adec_appdata->output_buf_cnt);
-               return -1;
+               return;
              }
              else {
                DEBUG_PRINT ("\nOMX_AllocateBuffer Output buffer success output_buf_cnt=%d\n",adec_appdata->output_buf_cnt);
@@ -2135,7 +2128,7 @@ void process_portreconfig(struct adec_appdata* adec_appdata)
          OMX_GetParameter(adec_appdata->mp3_dec_handle,OMX_IndexParamAudioMp3,&adec_appdata->mp3param);
          drv_pcm_config.sample_rate = adec_appdata->mp3param.nSampleRate;
          drv_pcm_config.channel_count =adec_appdata-> mp3param.nChannels;
-         printf("sample =%d channel = %d\n",adec_appdata->mp3param.nSampleRate,adec_appdata->mp3param.nChannels);
+         printf("sample =%lu channel = %lu\n",adec_appdata->mp3param.nSampleRate,adec_appdata->mp3param.nChannels);
          ioctl(adec_appdata->m_pcmdrv_fd, AUDIO_SET_CONFIG, &drv_pcm_config);
 
 
@@ -2163,12 +2156,12 @@ void process_portreconfig(struct adec_appdata* adec_appdata)
 void write_devctlcmd(int fd, const void *buf, int param){
 	int nbytes, nbytesWritten;
 	char cmdstr[128];
-	snprintf(cmdstr, 128, "%s%d\n", buf, param);
+	snprintf(cmdstr, 128, "%s%d\n", (char *)buf, param);
 	nbytes = strlen(cmdstr);
 	nbytesWritten = write(fd, cmdstr, nbytes);
 
 	if(nbytes != nbytesWritten)
-		printf("Failed to write string \"%s\" to omx_devmgr\n");
+		printf("Failed to write string \"%s\" to omx_devmgr\n", cmdstr);
 }
 
 

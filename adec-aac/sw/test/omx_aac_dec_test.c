@@ -122,7 +122,7 @@ int bReconfigureOutputPort = 0;
 
 #define FORMAT_PCM 1
 
-static bFileclose = 0;
+static int bFileclose = 0;
 
 struct wav_header {
   uint32_t riff_id;
@@ -172,12 +172,7 @@ const char *in_filename;
 const char out_filename[512];
 
 
-static int pcm_play(unsigned rate, unsigned channels,
-                    int (*fill)(void *buf, unsigned sz, void *cookie),
-                    void *cookie);
 OMX_U8* pBuffer_tmp = NULL;
-static char *next;
-static unsigned avail;
 
 int timeStampLfile = 0;
 int timestampInterval = 100;
@@ -221,6 +216,7 @@ static OMX_ERRORTYPE EmptyBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
 static OMX_ERRORTYPE FillBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
                                      OMX_IN OMX_PTR pAppData,
                                      OMX_IN OMX_BUFFERHEADERTYPE* pBuffer);
+static void write_devctlcmd(int fd, const void *buf, int param);
 
 void wait_for_event(void)
 {
@@ -275,6 +271,11 @@ OMX_ERRORTYPE EventHandler(OMX_IN OMX_HANDLETYPE hComponent,
     DEBUG_PRINT("Function %s \n", __FUNCTION__);
 
     int bufCnt=0;
+    /* To remove warning for unused variable to keep prototype same */
+    (void)hComponent;
+    (void)pAppData;
+    (void)pEventData;
+
     switch(eEvent) {
         case OMX_EventCmdComplete:
             DEBUG_PRINT("*********************************************\n");
@@ -283,19 +284,19 @@ OMX_ERRORTYPE EventHandler(OMX_IN OMX_HANDLETYPE hComponent,
             if(OMX_CommandPortDisable == (OMX_COMMANDTYPE)nData1)
             {
                 DEBUG_PRINT("******************************************\n");
-                DEBUG_PRINT("Recieved DISABLE Event Command Complete[%d]\n",nData2);
+                DEBUG_PRINT("Recieved DISABLE Event Command Complete[%lu]\n",nData2);
                 DEBUG_PRINT("******************************************\n");
             }
             else if(OMX_CommandPortEnable == (OMX_COMMANDTYPE)nData1)
             {
                 DEBUG_PRINT("*********************************************\n");
-                DEBUG_PRINT("Recieved ENABLE Event Command Complete[%d]\n",nData2);
+                DEBUG_PRINT("Recieved ENABLE Event Command Complete[%lu]\n",nData2);
                 DEBUG_PRINT("*********************************************\n");
             }
             else if(OMX_CommandFlush== (OMX_COMMANDTYPE)nData1)
             {
                 DEBUG_PRINT("*********************************************\n");
-                DEBUG_PRINT("Recieved FLUSH Event Command Complete[%d]\n",nData2);
+                DEBUG_PRINT("Recieved FLUSH Event Command Complete[%lu]\n",nData2);
                 DEBUG_PRINT("*********************************************\n");
             }
             event_complete();
@@ -364,16 +365,18 @@ OMX_ERRORTYPE FillBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
                               OMX_IN OMX_PTR pAppData,
                               OMX_IN OMX_BUFFERHEADERTYPE* pBuffer)
 {
-   int i=0;
-   int bytes_read=0;
+   unsigned int i=0;
    int bytes_writen = 0;
    static int count = 0;
    static int copy_done = 0;
    static int length_filled = 0;
    static int spill_length = 0;
    static int pcm_buf_size = 4800;
-   static int pcm_buf_count = 2;
+   static unsigned int pcm_buf_count = 2;
    struct msm_audio_config drv_pcm_config;
+
+    /* To remove warning for unused variable to keep prototype same */
+   (void)pAppData;
 
    if(flushinprogress == 1)
    {
@@ -444,7 +447,7 @@ OMX_ERRORTYPE FillBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
            memset(pBuffer_tmp, 0, pcm_buf_count*pcm_buf_size);
        }
    }
-   DEBUG_PRINT(" FillBufferDone #%d size %d\n", count++,pBuffer->nFilledLen);
+   DEBUG_PRINT(" FillBufferDone #%d size %lu\n", count++,pBuffer->nFilledLen);
    if(bEosOnOutputBuf)
        return OMX_ErrorNone;
    if(filewrite == 1)
@@ -503,7 +506,7 @@ OMX_ERRORTYPE FillBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
         else
         {
             if (write(m_pcmdrv_fd, pBuffer->pBuffer, pBuffer->nFilledLen ) !=
-                pBuffer->nFilledLen)
+                (ssize_t)pBuffer->nFilledLen)
             {
                 DEBUG_PRINT("FillBufferDone: Write data to PCM failed\n");
                 return OMX_ErrorNone;
@@ -536,8 +539,10 @@ OMX_ERRORTYPE EmptyBufferDone(OMX_IN OMX_HANDLETYPE hComponent,
 {
     int readBytes =0;
 
+    /* To remove warning for unused variable to keep prototype same */
+    (void)pAppData;
     DEBUG_PRINT("\nFunction %s cnt[%d], used_ip_buf_cnt[%d]\n", __FUNCTION__, ebd_cnt,used_ip_buf_cnt);
-    DEBUG_PRINT("\nFunction %s %p %p\n", __FUNCTION__, pBuffer,pBuffer->nFilledLen);
+    DEBUG_PRINT("\nFunction %s %p %lu\n", __FUNCTION__, pBuffer,pBuffer->nFilledLen);
     ebd_cnt++;
     used_ip_buf_cnt--;
     pthread_mutex_lock(&etb_lock);
@@ -643,8 +648,8 @@ int main(int argc, char **argv)
       channels = atoi(argv[3]);
       pcmplayback = atoi(argv[4]);
       filewrite = atoi(argv[5]);
-      strncpy(out_filename,argv[1],strlen(argv[1]));
-      strcat(out_filename,".wav");
+      strncpy((char *)out_filename,argv[1],strlen(argv[1]));
+      strcat((char *)out_filename,".wav");
     } else {
 
         DEBUG_PRINT(" invalid format: \n");
@@ -816,15 +821,12 @@ int Init_Decoder(OMX_STRING audio_component)
     DEBUG_PRINT("Inside %s \n", __FUNCTION__);
     OMX_ERRORTYPE omxresult;
     OMX_U32 total = 0;
-    OMX_U8** audCompNames;
     typedef OMX_U8* OMX_U8_PTR;
     char *role ="audio_decoder.aac";
 
     static OMX_CALLBACKTYPE call_back = {
         &EventHandler,&EmptyBufferDone,&FillBufferDone
     };
-
-    int i = 0;
 
     /* Init. the OpenMAX Core */
     DEBUG_PRINT("\nInitializing OpenMAX Core....\n");
@@ -841,7 +843,7 @@ int Init_Decoder(OMX_STRING audio_component)
     /* Query for audio decoders*/
     DEBUG_PRINT("Aac_test: Before entering OMX_GetComponentOfRole");
     OMX_GetComponentsOfRole(role, &total, 0);
-    DEBUG_PRINT ("\nTotal components of role=%s :%d", role, total);
+    DEBUG_PRINT ("\nTotal components of role=%s :%lu", role, total);
 
 
     omxresult = OMX_GetHandle((OMX_HANDLETYPE*)(&aac_dec_handle),
@@ -866,8 +868,8 @@ int Init_Decoder(OMX_STRING audio_component)
     }
     else
     {
-        DEBUG_PRINT("\nportParam.nPorts:%d\n", portParam.nPorts);
-    DEBUG_PRINT("\nportParam.nStartPortNumber:%d\n",
+        DEBUG_PRINT("\nportParam.nPorts:%lu\n", portParam.nPorts);
+    DEBUG_PRINT("\nportParam.nStartPortNumber:%lu\n",
                                              portParam.nStartPortNumber);
     }
 
@@ -892,12 +894,7 @@ int Play_Decoder()
     int Size=0;
     DEBUG_PRINT("Inside %s \n", __FUNCTION__);
     OMX_ERRORTYPE ret;
-    OMX_STATETYPE state;
-    OMX_U32 index;
-    unsigned int bufCnt=0;
-#ifdef PCM_PLAYBACK
-        struct msm_audio_config drv_pcm_config;
-#endif  // PCM_PLAYBACK
+    OMX_INDEXTYPE index;
 
     DEBUG_PRINT("sizeof[%d]\n", sizeof(OMX_BUFFERHEADERTYPE));
 
@@ -916,8 +913,8 @@ int Play_Decoder()
     inputportFmt.nPortIndex = portParam.nStartPortNumber;
 
     OMX_GetParameter(aac_dec_handle,OMX_IndexParamPortDefinition,&inputportFmt);
-    DEBUG_PRINT ("\nDec: Input Buffer Count %d\n", inputportFmt.nBufferCountMin);
-    DEBUG_PRINT ("\nDec: Input Buffer Size %d\n", inputportFmt.nBufferSize);
+    DEBUG_PRINT ("\nDec: Input Buffer Count %lu\n", inputportFmt.nBufferCountMin);
+    DEBUG_PRINT ("\nDec: Input Buffer Size %lu\n", inputportFmt.nBufferSize);
 
     if(OMX_DirInput != inputportFmt.eDir) {
         DEBUG_PRINT ("\nDec: Expect Input Port\n");
@@ -967,8 +964,8 @@ int Play_Decoder()
     outputportFmt.nPortIndex = portParam.nStartPortNumber + 1;
 
     OMX_GetParameter(aac_dec_handle,OMX_IndexParamPortDefinition,&outputportFmt);
-    DEBUG_PRINT ("\nDec: Output Buffer Count %d\n", outputportFmt.nBufferCountMin);
-    DEBUG_PRINT ("\nDec: Output Buffer Size %d\n", outputportFmt.nBufferSize);
+    DEBUG_PRINT ("\nDec: Output Buffer Count %lu\n", outputportFmt.nBufferCountMin);
+    DEBUG_PRINT ("\nDec: Output Buffer Size %lu\n", outputportFmt.nBufferSize);
 
     if(OMX_DirOutput != outputportFmt.eDir) {
         DEBUG_PRINT ("\nDec: Expect Output Port\n");
@@ -1111,12 +1108,13 @@ static OMX_ERRORTYPE Allocate_Buffer ( OMX_COMPONENTTYPE *avc_dec_handle,
     DEBUG_PRINT("Inside %s \n", __FUNCTION__);
     OMX_ERRORTYPE error=OMX_ErrorNone;
     long bufCnt=0;
-
+    /* To remove warning for unused variable to keep prototype same */
+    (void)avc_dec_handle;
     *pBufHdrs= (OMX_BUFFERHEADERTYPE **)
                    malloc(sizeof(OMX_BUFFERHEADERTYPE*)*bufCntMin);
 
     for(bufCnt=0; bufCnt < bufCntMin; ++bufCnt) {
-        DEBUG_PRINT("\n OMX_AllocateBuffer No %d \n", bufCnt);
+        DEBUG_PRINT("\n OMX_AllocateBuffer No %ld \n", bufCnt);
         error = OMX_AllocateBuffer(aac_dec_handle, &((*pBufHdrs)[bufCnt]),
                                    nPortIndex, NULL, bufSize);
     }
@@ -1127,10 +1125,9 @@ static OMX_ERRORTYPE Allocate_Buffer ( OMX_COMPONENTTYPE *avc_dec_handle,
 static int Read_Buffer (OMX_BUFFERHEADERTYPE  *pBufHdr )
 {
     int bytes_read=0;
-    static int cnt =0;
     pBufHdr->nFilledLen = 0;
     pBufHdr->nFlags |= OMX_BUFFERFLAG_EOS;
-    DEBUG_PRINT("\n Length : %d, buffer address : %p\n", pBufHdr->nAllocLen, pBufHdr->pBuffer);
+    DEBUG_PRINT("\n Length : %lu, buffer address : %p\n", pBufHdr->nAllocLen, pBufHdr->pBuffer);
     if(bsac && configbufsize)
     {
         bytes_read = fread(pBufHdr->pBuffer, 1, configbufsize, inputBufferFile);
@@ -1179,11 +1176,11 @@ static int open_audio_file ()
 
     DEBUG_PRINT("Inside %s filename=%s -->%s\n", __FUNCTION__, in_filename,out_filename);
     inputBufferFile = fopen (in_filename, "rb");
-    DEBUG_PRINT("\n FILE DESCRIPTOR : %d\n", inputBufferFile );
-    if (inputBufferFile < 0) {
+    DEBUG_PRINT("\n FILE DESCRIPTOR : %p\n", inputBufferFile );
+    if (inputBufferFile == NULL) {
         DEBUG_PRINT("\ni/p file %s could NOT be opened\n",
                                          in_filename);
-    error_code = -1;
+	    error_code = -1;
     }
 
     if(filewrite == 1)
@@ -1282,7 +1279,7 @@ void process_portreconfig ( )
         OMX_GetParameter(aac_dec_handle,OMX_IndexParamAudioAac,&aacparam);
         drv_pcm_config.sample_rate = aacparam.nSampleRate;
         drv_pcm_config.channel_count = aacparam.nChannels;
-        printf("sample =%d channel = %d\n",aacparam.nSampleRate,aacparam.nChannels);
+        printf("sample =%lu channel = %lu\n",aacparam.nSampleRate,aacparam.nChannels);
         ioctl(m_pcmdrv_fd, AUDIO_SET_CONFIG, &drv_pcm_config);
         DEBUG_PRINT("Configure Driver for PCM playback \n");
         start_done = 0;
@@ -1306,14 +1303,14 @@ void process_portreconfig ( )
    }
 }
 
-void write_devctlcmd(int fd, const void *buf, int param){
+static void write_devctlcmd(int fd, const void *buf, int param){
 	int nbytes, nbytesWritten;
 	char cmdstr[128];
-	snprintf(cmdstr, 128, "%s%d\n", buf, param);
+	snprintf(cmdstr, 128, "%s%d\n", (char *)buf, param);
 	nbytes = strlen(cmdstr);
 	nbytesWritten = write(fd, cmdstr, nbytes);
 
 	if(nbytes != nbytesWritten)
-		printf("Failed to write string \"%s\" to omx_devmgr\n");
+		printf("Failed to write string \"%s\" to omx_devmgr\n", cmdstr);
 }
 
