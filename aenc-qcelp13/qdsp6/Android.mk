@@ -27,6 +27,7 @@ libOmxQcelp13Enc-inc       := $(LOCAL_PATH)/inc
 libOmxQcelp13Enc-inc       += $(TARGET_OUT_HEADERS)/mm-core/omxcore
 
 LOCAL_MODULE            := libOmxQcelp13Enc
+LOCAL_MODULE_TAGS       := optional
 LOCAL_CFLAGS            := $(libOmxQcelp13Enc-def)
 LOCAL_C_INCLUDES        := $(libOmxQcelp13Enc-inc)
 LOCAL_PRELINK_MODULE    := false
@@ -51,6 +52,7 @@ ifeq ($(strip $(QC_PROP)),true)
 mm-qcelp13-enc-test-inc    += $(TARGET_OUT_HEADERS)/mm-audio/audio-alsa
 endif
 LOCAL_MODULE            := mm-aenc-omxqcelp13-test
+LOCAL_MODULE_TAGS       := optional
 LOCAL_CFLAGS            := $(libOmxQcelp13Enc-def)
 LOCAL_C_INCLUDES        := $(mm-qcelp13-enc-test-inc)
 LOCAL_PRELINK_MODULE    := false
