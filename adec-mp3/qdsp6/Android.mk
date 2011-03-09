@@ -23,6 +23,7 @@ libOmxMp3Dec-inc        := $(LOCAL_PATH)/inc
 libOmxMp3Dec-inc        += $(TARGET_OUT_HEADERS)/mm-core/omxcore
 
 LOCAL_MODULE            := libOmxMp3Dec
+LOCAL_MODULE_TAGS       := optional
 LOCAL_CFLAGS            := $(libOmxMp3Dec-def)
 LOCAL_C_INCLUDES        := $(libOmxMp3Dec-inc)
 LOCAL_PRELINK_MODULE    := false
@@ -45,6 +46,7 @@ mm-mp3-dec-test-inc        += $(LOCAL_PATH)/test
 mm-mp3-dec-test-inc        += $(TARGET_OUT_HEADERS)/mm-core/omxcore
 
 LOCAL_MODULE               := mm-adec-omxmp3-test
+LOCAL_MODULE_TAGS          := optional
 LOCAL_CFLAGS               := $(libOmxMp3Dec-def)
 LOCAL_C_INCLUDES           := $(mm-mp3-dec-test-inc)
 LOCAL_PRELINK_MODULE       := false

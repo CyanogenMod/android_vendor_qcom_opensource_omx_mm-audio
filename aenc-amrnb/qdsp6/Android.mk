@@ -27,6 +27,7 @@ libOmxAmrEnc-inc       := $(LOCAL_PATH)/inc
 libOmxAmrEnc-inc       += $(TARGET_OUT_HEADERS)/mm-core/omxcore
 
 LOCAL_MODULE            := libOmxAmrEnc
+LOCAL_MODULE_TAGS       := optional
 LOCAL_CFLAGS            := $(libOmxAmrEnc-def)
 LOCAL_C_INCLUDES        := $(libOmxAmrEnc-inc)
 LOCAL_PRELINK_MODULE    := false
@@ -51,6 +52,7 @@ ifeq ($(strip $(QC_PROP)),true)
 mm-amr-enc-test-inc    += $(TARGET_OUT_HEADERS)/mm-audio/audio-alsa 
 endif
 LOCAL_MODULE            := mm-aenc-omxamr-test
+LOCAL_MODULE_TAGS       := optional
 LOCAL_CFLAGS            := $(libOmxAmrEnc-def)
 LOCAL_C_INCLUDES        := $(mm-amr-enc-test-inc)
 LOCAL_PRELINK_MODULE    := false

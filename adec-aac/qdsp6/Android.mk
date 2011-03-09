@@ -24,6 +24,7 @@ libOmxAacDec-inc        += $(TARGET_OUT_HEADERS)/mm-core/omxcore
 
 
 LOCAL_MODULE            := libOmxAacDec
+LOCAL_MODULE_TAGS       := optional
 LOCAL_CFLAGS            := $(libOmxAacDec-def)
 LOCAL_C_INCLUDES        := $(libOmxAacDec-inc)
 LOCAL_PRELINK_MODULE    := false
@@ -47,6 +48,7 @@ mm-aac-dec-test-inc        += $(LOCAL_PATH)/test
 mm-aac-dec-test-inc        += $(TARGET_OUT_HEADERS)/mm-core/omxcore
 
 LOCAL_MODULE               := mm-adec-omxaac-test
+LOCAL_MODULE_TAGS          := optional
 LOCAL_CFLAGS               := $(libOmxAacDec-def)
 LOCAL_C_INCLUDES           := $(mm-aac-dec-test-inc)
 LOCAL_PRELINK_MODULE       := false
