@@ -4003,6 +4003,7 @@ OMX_ERRORTYPE  omx_aac_aenc::fill_this_buffer_proxy
                  meta_out->offset_to_frame += szadifhr;
                  numframes--;
             }
+            buffer->nFlags = OMX_BUFFERFLAG_CODECCONFIG;
             adif_flag++;
         }
         else if((m_aac_param.eAACStreamFormat == OMX_AUDIO_AACStreamFormatMP4FF)
@@ -4013,6 +4014,7 @@ OMX_ERRORTYPE  omx_aac_aenc::fill_this_buffer_proxy
             memcpy(buffer->pBuffer,&audaac_header_mp4ff[0],AUDAAC_MAX_MP4FF_HEADER_LENGTH);
             buffer->nFilledLen = AUDAAC_MAX_MP4FF_HEADER_LENGTH;
             buffer->nTimeStamp = 0;
+            buffer->nFlags = OMX_BUFFERFLAG_CODECCONFIG;
             frame_done_cb((OMX_BUFFERHEADERTYPE *)buffer);
             mp4ff_flag++;
             return OMX_ErrorNone;
