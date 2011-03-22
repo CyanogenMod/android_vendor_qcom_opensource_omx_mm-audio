@@ -1,4 +1,5 @@
 ifneq ($(BUILD_TINY_ANDROID),true)
+ifneq ($(BUILD_WITHOUT_PV),true)
 
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
@@ -49,6 +50,7 @@ LOCAL_SRC_FILES         := test/omx_amrwb_dec_test.c
 include $(BUILD_EXECUTABLE)
 endif
 
+endif #BUILD_WITHOUT_PV
 endif #BUILD_TINY_ANDROID
 
 # ---------------------------------------------------------------------------------
