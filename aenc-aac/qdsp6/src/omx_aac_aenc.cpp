@@ -1370,6 +1370,7 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
             {
 
                 struct msm_audio_aac_enc_config drv_aac_enc_config;
+                struct msm_audio_aac_config drv_aac_config;
                 struct msm_audio_stream_config drv_stream_config;
                 struct msm_audio_buf_cfg buf_cfg;
                 struct msm_audio_config pcm_cfg;
@@ -1417,6 +1418,50 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 {
                     DEBUG_PRINT_ERROR("ioctl AUDIO_SET_AAC_ENC_CONFIG failed, errno[%d]\n", errno);
                 }
+                if (ioctl(m_drv_fd, AUDIO_GET_AAC_CONFIG, &drv_aac_config) == -1) {
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_GET_AAC_CONFIG failed, errno[%d]\n", errno);
+                }
+
+                drv_aac_config.sbr_on_flag = 0;
+                drv_aac_config.sbr_ps_on_flag = 0;
+				/* Other members of drv_aac_config are not used, so not setting
+				   them */
+                switch(m_aac_param.eAACProfile)
+                {
+                    case OMX_AUDIO_AACObjectLC:
+                    {
+                        DEBUG_PRINT("AAC_Profile: OMX_AUDIO_AACObjectLC\n");
+                        drv_aac_config.sbr_on_flag = 0;
+                        drv_aac_config.sbr_ps_on_flag = 0;
+                        break;
+                    }
+                    case OMX_AUDIO_AACObjectHE:
+                    {
+                        DEBUG_PRINT("AAC_Profile: OMX_AUDIO_AACObjectHE\n");
+                        drv_aac_config.sbr_on_flag = 1;
+                        drv_aac_config.sbr_ps_on_flag = 0;
+                        break;
+                    }
+                    case OMX_AUDIO_AACObjectHE_PS:
+                    {
+                        DEBUG_PRINT("AAC_Profile: OMX_AUDIO_AACObjectHE_PS\n");
+                        drv_aac_config.sbr_on_flag = 1;
+                        drv_aac_config.sbr_ps_on_flag = 1;
+                        break;
+                    }
+                    default:
+                    {
+                        DEBUG_PRINT_ERROR("Unsupported AAC Profile Type = %d\n", m_aac_param.eAACProfile);
+                        break;
+                    }
+                }
+                DEBUG_PRINT("sbr_flag = %d, sbr_ps_flag = %d\n",drv_aac_config.sbr_on_flag,
+                                   drv_aac_config.sbr_ps_on_flag);
+
+                if (ioctl(m_drv_fd, AUDIO_SET_AAC_CONFIG, &drv_aac_config) == -1) {
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_SET_AAC_CONFIG failed, errno[%d]\n", errno);
+                }
+
                 if (ioctl(m_drv_fd, AUDIO_GET_BUF_CFG, &buf_cfg) == -1)
                 {
                     DEBUG_PRINT_ERROR("ioctl AUDIO_GET_BUF_CFG, errno[%d]\n", errno);
@@ -1435,6 +1480,8 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                     }
                     pcm_cfg.channel_count = m_pcm_param.nChannels;
                     pcm_cfg.sample_rate  =  m_pcm_param.nSamplingRate;
+                    pcm_cfg.buffer_size =  input_buffer_size;
+                    pcm_cfg.buffer_count =  m_inp_current_buf_count;
                     DEBUG_PRINT("pcm config %lu %lu\n",m_pcm_param.nChannels,m_pcm_param.nSamplingRate);
 
                     if (ioctl(m_drv_fd, AUDIO_SET_CONFIG, &pcm_cfg) == -1)

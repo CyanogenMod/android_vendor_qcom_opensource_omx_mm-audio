@@ -112,6 +112,7 @@ uint32_t pcmplayback = 0;
 uint32_t tunnel      = 0;
 uint32_t rectime     = -1;
 uint32_t format = 1;
+uint32_t profile = OMX_AUDIO_AACObjectLC;
 #define DEBUG_PRINT printf
 unsigned to_idle_transition = 0;
 
@@ -526,13 +527,50 @@ int main(int argc, char **argv)
       rectime = atoi(argv[6]);
       bitrate = atoi(argv[7]);
       format =  atoi(argv[8]);
+      profile = atoi(argv[9]);
+
+	  DEBUG_PRINT("Input parameters: samplerate = %d, channels = %d, tunnel = %d,"
+				  " rectime = %d, bitrate = %d, format = %d, profile = %d\n",
+				  samplerate, channels, tunnel, rectime, bitrate, format, profile);
+
+	  if (!((profile == 2) || (profile == 5) || (profile == 29))) {
+		  DEBUG_PRINT("profile = %d, not supported. Supported "
+					  "profile values are AAC_LC(2), AAC+(5), EAAC+(29)\n", profile);
+		  return 0;
+	  }
+	  if (!((format == 1) || (format == 6)))  {
+		  DEBUG_PRINT("format = %d, not supported. Supported "
+					  "formats are ADTS(1), RAW(6)\n", format);
+		  return 0;
+	  }
+	  if ((channels > 2) || (channels <= 0)) {
+		  DEBUG_PRINT("channels = %d, not supported. Supported "
+					  "number of channels are 1 and 2\n", channels);
+		  return 0;
+	  }
+	  if ((samplerate < 8000) && (samplerate > 48000)) {
+		  DEBUG_PRINT("samplerate = %d, not supported, Supported "
+					  "samplerates are 8000, 11025, 12000, 16000, 22050, "
+					  "24000, 32000, 44100, 48000\n", samplerate);
+		  return 0;
+	  } else {
+		  if ((profile == 5) || (profile == 29)) {
+			  if (samplerate < 24000) {
+				  DEBUG_PRINT("samplerate = %d, not supported for AAC+/EAAC+."
+							  " Supported samplerates are 24000, 32000,"
+							  " 44100, 48000\n", samplerate);
+				  return 0;
+			  }
+		  }
+	  }
     } else {
         DEBUG_PRINT(" invalid format: \n");
-        DEBUG_PRINT("ex: ./mm-aenc-omxaac INPUTFILE AAC_OUTPUTFILE SAMPFREQ CHANNEL TUNNEL RECORDTIME BITRATE FORMAT\n");
+        DEBUG_PRINT("ex: ./mm-aenc-omxaac INPUTFILE AAC_OUTPUTFILE SAMPFREQ CHANNEL TUNNEL RECORDTIME BITRATE FORMAT PROFILE\n");
         DEBUG_PRINT("FOR TUNNEL MOD PASS INPUT FILE AS ZERO\n");
         DEBUG_PRINT("RECORDTIME in seconds for AST Automation ...TUNNEL MODE ONLY\n");
-        DEBUG_PRINT("FORMAT::ADTS(1),ADIF(4),RAW(6)\n");
+        DEBUG_PRINT("FORMAT::ADTS(1), RAW(6)\n");
         DEBUG_PRINT("BITRATE in bits/sec \n");
+        DEBUG_PRINT("PROFILE::AAC_LC(2), AAC+(5), EAAC+(29)\n");
         return 0;
     }
     if(tunnel == 0)
@@ -792,6 +830,7 @@ int Play_Encoder()
     aacparam.nSampleRate  =  samplerate;
     aacparam.eChannelMode =  OMX_AUDIO_ChannelModeStereo;
     aacparam.eAACStreamFormat    =  (OMX_AUDIO_AACSTREAMFORMATTYPE)format;
+    aacparam.eAACProfile = (OMX_AUDIO_AACPROFILETYPE)profile;
     OMX_SetParameter(aac_enc_handle,OMX_IndexParamAudioAac,&aacparam);
     OMX_GetExtensionIndex(aac_enc_handle,"OMX.Qualcomm.index.audio.sessionId",&index);
     OMX_GetParameter(aac_enc_handle,index,&streaminfoparam);
@@ -1121,6 +1160,13 @@ void audaac_rec_install_adts_header_variable (uint16  byte_num)
 
   audaac_hdr_bit_index = 12;
 
+  if ((format == OMX_AUDIO_AACStreamFormatRAW) &&
+      ((profile == OMX_AUDIO_AACObjectHE) ||
+       (profile == OMX_AUDIO_AACObjectHE_PS))){
+      if (samplerate >= 24000)
+          sample_index = samplerate/2;
+  }
+
   /* ID field, 1 bit */
   value = 1;
   audaac_rec_install_bits(audaac_header,
@@ -1156,8 +1202,8 @@ void audaac_rec_install_adts_header_variable (uint16  byte_num)
                           (uint32)srate_enum,
                           &(audaac_hdr_bit_index));
 
-  DEBUG_PRINT("Inside = %s \n",__FUNCTION__);
-  DEBUG_PRINT("sample_index=%d; srate_enum = %d \n",sample_index,srate_enum);
+  DEBUG_PRINT("%s: sample_index=%d; srate_enum = %d \n",
+			  __FUNCTION__, sample_index, srate_enum);
 
   /* pravate_bit field, 1 bits */
   audaac_rec_install_bits(audaac_header,
