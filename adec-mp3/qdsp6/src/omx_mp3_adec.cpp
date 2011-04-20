@@ -176,7 +176,9 @@ omx_mp3_adec::omx_mp3_adec(): m_state(OMX_StateInvalid),
                               m_cmd_svr(NULL),
                               m_drv_fd(-1),
                               m_inp_buf_count(0),
-                              m_flags(0)
+                              m_flags(0),
+                              output_buffer_size(OMX_MP3_OUTPUT_BUFFER_SIZE),
+                              input_buffer_size(OMX_CORE_INPUT_BUFFER_SIZE)
 {
   memset(&m_cmp,       0,     sizeof(m_cmp));
   memset(&m_cb,        0,      sizeof(m_cb));
@@ -925,7 +927,7 @@ OMX_ERRORTYPE  omx_mp3_adec::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
         /* What if the component does not restrict how many buffer to take */
         portDefn->nBufferCountActual = OMX_CORE_NUM_INPUT_BUFFERS;
         portDefn->nBufferCountMin    = OMX_CORE_NUM_INPUT_BUFFERS;
-        portDefn->nBufferSize        = OMX_CORE_INPUT_BUFFER_SIZE;
+        portDefn->nBufferSize        = input_buffer_size;
         portDefn->format.audio.bFlagErrorConcealment = OMX_TRUE;
         if (portDefn->format.audio.cMIMEType != NULL) {
           memcpy(portDefn->format.audio.cMIMEType, "audio/mpeg", sizeof("audio/mpeg"));
@@ -941,9 +943,8 @@ OMX_ERRORTYPE  omx_mp3_adec::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
         /* What if the component does not restrict how many buffer to take */
         portDefn->nBufferCountActual = 2;
         portDefn->nBufferCountMin    = 2;
-        portDefn->nBufferSize        = OMX_MP3_OUTPUT_BUFFER_SIZE;
+        portDefn->nBufferSize = output_buffer_size;
         portDefn->format.audio.bFlagErrorConcealment = OMX_TRUE;
-        //memcpy(portDefn->format.audio.cMIMEType, "audio/mpeg", sizeof("audio/mpeg") + 1);
         portDefn->format.audio.eEncoding = OMX_AUDIO_CodingPCM;
         portDefn->format.audio.pNativeRender = 0;
 

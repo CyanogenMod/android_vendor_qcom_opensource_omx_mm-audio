@@ -256,8 +256,8 @@ omx_evrc_aenc::omx_evrc_aenc(): m_tmp_meta_buf(NULL),
         m_out_act_buf_count (OMX_CORE_NUM_OUTPUT_BUFFERS),
         m_inp_current_buf_count(0),
         m_out_current_buf_count(0),
-        output_buffer_size(0),
-        input_buffer_size(0),
+        output_buffer_size(OMX_EVRC_OUTPUT_BUFFER_SIZE),
+        input_buffer_size(OMX_CORE_INPUT_BUFFER_SIZE),
         m_inp_bEnabled(OMX_TRUE),
         m_out_bEnabled(OMX_TRUE),
         m_inp_bPopulated(OMX_FALSE),
@@ -2397,8 +2397,7 @@ OMX_ERRORTYPE  omx_evrc_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                     portDefn->bPopulated = m_inp_bPopulated;
                     portDefn->nBufferCountActual = m_inp_act_buf_count;
                     portDefn->nBufferCountMin    = OMX_CORE_NUM_INPUT_BUFFERS;
-                    portDefn->nBufferSize        = OMX_CORE_INPUT_BUFFER_SIZE;
-                    input_buffer_size = OMX_CORE_INPUT_BUFFER_SIZE;
+                    portDefn->nBufferSize        = input_buffer_size;
                     portDefn->format.audio.bFlagErrorConcealment = OMX_TRUE;
                     portDefn->format.audio.eEncoding = OMX_AUDIO_CodingPCM;
                     portDefn->format.audio.pNativeRender = 0;
@@ -2409,8 +2408,7 @@ OMX_ERRORTYPE  omx_evrc_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                     portDefn->bPopulated = m_out_bPopulated;
                     portDefn->nBufferCountActual = m_out_act_buf_count;
                     portDefn->nBufferCountMin    = OMX_CORE_NUM_OUTPUT_BUFFERS;
-                    portDefn->nBufferSize        = OMX_EVRC_OUTPUT_BUFFER_SIZE;
-                    output_buffer_size   = OMX_EVRC_OUTPUT_BUFFER_SIZE;
+                    portDefn->nBufferSize        = output_buffer_size;
                     portDefn->format.audio.bFlagErrorConcealment = OMX_TRUE;
                     portDefn->format.audio.eEncoding = OMX_AUDIO_CodingEVRC;
                     portDefn->format.audio.pNativeRender = 0;

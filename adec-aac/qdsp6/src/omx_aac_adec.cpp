@@ -305,6 +305,8 @@ omx_aac_adec::omx_aac_adec(): m_flush_cnt(255),
                               m_drv_fd(-1),
                               m_inp_buf_count(0),
                               m_flags(0),
+                              output_buffer_size(OMX_AAC_OUTPUT_BUFFER_SIZE),
+                              input_buffer_size(OMX_CORE_INPUT_BUFFER_SIZE),
                               m_aac_hdr_bit_index(0),
                               m_is_event_done(0),
                               m_first_aac_header(0),
@@ -1624,8 +1626,7 @@ OMX_ERRORTYPE  omx_aac_adec::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
        /* What if the component does not restrict how many buffer to take */
         portDefn->nBufferCountActual = OMX_CORE_NUM_INPUT_BUFFERS;
         portDefn->nBufferCountMin    = OMX_CORE_NUM_INPUT_BUFFERS;
-        portDefn->nBufferSize        = OMX_CORE_INPUT_BUFFER_SIZE;
-        input_buffer_size = OMX_CORE_INPUT_BUFFER_SIZE;
+        portDefn->nBufferSize        = input_buffer_size;
         portDefn->format.audio.bFlagErrorConcealment = OMX_TRUE;
         portDefn->format.audio.eEncoding = OMX_AUDIO_CodingAAC;
         portDefn->format.audio.pNativeRender = 0;
@@ -1637,8 +1638,7 @@ OMX_ERRORTYPE  omx_aac_adec::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
         portDefn->eDir =  OMX_DirOutput;
         portDefn->nBufferCountActual = 2; /* What if the component does not restrict how many buffer to take */
         portDefn->nBufferCountMin    = 2;
-        portDefn->nBufferSize        = OMX_AAC_OUTPUT_BUFFER_SIZE;
-        output_buffer_size   = OMX_AAC_OUTPUT_BUFFER_SIZE;
+        portDefn->nBufferSize        = output_buffer_size;
         portDefn->format.audio.bFlagErrorConcealment = OMX_TRUE;
         portDefn->format.audio.eEncoding = OMX_AUDIO_CodingPCM;
         portDefn->format.audio.pNativeRender = 0;

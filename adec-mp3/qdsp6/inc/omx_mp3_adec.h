@@ -327,7 +327,8 @@ struct omx_cmd_queue
   unsigned int                 nTimestamp;
   unsigned int                 pcm_feedback;    // enable tunnel or non-tunnel mode
   unsigned int                 ntotal_playtime;
-
+  unsigned int                 output_buffer_size;
+  unsigned int                 input_buffer_size;
   pthread_mutex_t              m_lock;
   pthread_mutexattr_t          m_lock_attr;
   unsigned                     m_msg_cnt; // message count
