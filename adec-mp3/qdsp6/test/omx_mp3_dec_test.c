@@ -145,7 +145,6 @@ OMX_PARAM_PORTDEFINITIONTYPE outputportFmt;
 OMX_AUDIO_PARAM_PCMMODETYPE pcmParam;
 OMX_AUDIO_PARAM_MP3TYPE mp3param;
 OMX_PORT_PARAM_TYPE portParam;
-OMX_PORT_PARAM_TYPE portFmt;
 OMX_ERRORTYPE error;
 struct mp3_header mp3Header;
 
@@ -704,18 +703,6 @@ int Init_Decoder(OMX_STRING audio_component)
         DEBUG_PRINT("\nportParam.nStartPortNumber:%d\n",
                                              portParam.nStartPortNumber);
     }
-
-
-
-    DEBUG_PRINT("Set parameter immediately followed by getparameter");
-    omxresult = OMX_SetParameter(mp3_dec_handle,
-                               OMX_IndexParamPortDefinition,
-                               &portFmt);
-
-   if(OMX_ErrorNone != omxresult) {
-        DEBUG_PRINT("Set parameter failed");
-    }
-
     return 0;
 }
 

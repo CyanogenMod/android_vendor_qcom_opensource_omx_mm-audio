@@ -144,7 +144,6 @@ OMX_AUDIO_PARAM_AMRTYPE amrparam;
 QOMX_AUDIO_PARAM_AMRWBPLUSTYPE amrwbPlusparam;
 
 OMX_PORT_PARAM_TYPE portParam;
-OMX_PORT_PARAM_TYPE portFmt;
 OMX_ERRORTYPE error;
 OMX_U8* pBuffer_tmp = NULL;
 
@@ -949,17 +948,6 @@ int Init_Decoder(OMX_STRING audio_component)
         DEBUG_PRINT("\nportParam.nStartPortNumber:%lu\n",
                                              portParam.nStartPortNumber);
     }
-
-    DEBUG_PRINT("Set parameter immediately followed by getparameter\n");
-    omxresult = OMX_SetParameter(amrwb_dec_handle,
-                               OMX_IndexParamPortDefinition,
-                               &portFmt);
-
-    if(OMX_ErrorNone != omxresult)
-    {
-        DEBUG_PRINT("Set parameter failed\n");
-    }
-
     return 0;
 }
 

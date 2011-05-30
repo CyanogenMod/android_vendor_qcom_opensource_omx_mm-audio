@@ -117,7 +117,6 @@ OMX_PARAM_PORTDEFINITIONTYPE inputportFmt;
 OMX_PARAM_PORTDEFINITIONTYPE outputportFmt;
 OMX_AUDIO_PARAM_AACPROFILETYPE aacparam;
 OMX_PORT_PARAM_TYPE portParam;
-OMX_PORT_PARAM_TYPE portFmt;
 OMX_ERRORTYPE error;
 
 
@@ -658,19 +657,6 @@ int Init_Decoder(OMX_STRING audio_component)
     DEBUG_PRINT("\nportParam.nStartPortNumber:%d\n",
                                              portParam.nStartPortNumber);
     }
-
-
-
-    DEBUG_PRINT("Set parameter immediately followed by getparameter");
-    omxresult = OMX_SetParameter(aac_dec_handle,
-                               OMX_IndexParamPortDefinition,
-                               &portFmt);
-
-    if(OMX_ErrorNone != omxresult)
-    {
-        DEBUG_PRINT("Set parameter failed");
-    }
-
     return 0;
 }
 

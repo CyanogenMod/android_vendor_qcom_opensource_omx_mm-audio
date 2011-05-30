@@ -178,7 +178,6 @@ struct adec_appdata
    OMX_AUDIO_PARAM_MP3TYPE mp3param;
    QOMX_AUDIO_STREAM_INFO_DATA streaminfoparam;
    OMX_PORT_PARAM_TYPE portParam;
-   OMX_PORT_PARAM_TYPE portFmt;
    OMX_ERRORTYPE error;
    int input_buf_cnt;
    int output_buf_cnt;
@@ -1216,15 +1215,6 @@ int Init_Decoder(struct adec_appdata* adec_appdata)
       DEBUG_PRINT("\nportParam.nPorts:%u\n", (unsigned)(adec_appdata->portParam.nPorts));
       DEBUG_PRINT("\nportParam.nStartPortNumber:%u\n",
                                           (unsigned)(adec_appdata->portParam.nStartPortNumber));
-   }
-
-   DEBUG_PRINT("Set parameter immediately followed by getparameter");
-   omxresult = OMX_SetParameter(adec_appdata->mp3_dec_handle,
-                               OMX_IndexParamPortDefinition,
-                               &(adec_appdata->portFmt));
-
-   if(OMX_ErrorNone != omxresult) {
-      DEBUG_PRINT("Set parameter failed");
    }
    return 0;
 }
