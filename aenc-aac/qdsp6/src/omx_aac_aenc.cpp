@@ -317,25 +317,31 @@ omx_aac_aenc::omx_aac_aenc(): m_tmp_meta_buf(NULL),
     {
        DEBUG_PRINT_ERROR("pthread_cond_init returns non zero for cond\n");
        if (cond_ret == EAGAIN)
-         DEBUG_PRINT_ERROR("The system lacked necessary resources(other than mem)\n");
+         DEBUG_PRINT_ERROR("The system lacked necessary \
+				resources(other than mem)\n");
        else if (cond_ret == ENOMEM)
-          DEBUG_PRINT_ERROR("Insufficient memory to initialise condition variable\n");
+          DEBUG_PRINT_ERROR("Insufficient memory to \
+				initialise condition variable\n");
     }
     if ((cond_ret = pthread_cond_init (&in_cond, NULL)) != 0)
     {
        DEBUG_PRINT_ERROR("pthread_cond_init returns non zero for in_cond\n");
        if (cond_ret == EAGAIN)
-         DEBUG_PRINT_ERROR("The system lacked necessary resources(other than mem)\n");
+         DEBUG_PRINT_ERROR("The system lacked necessary \
+				resources(other than mem)\n");
        else if (cond_ret == ENOMEM)
-          DEBUG_PRINT_ERROR("Insufficient memory to initialise condition variable\n");
+          DEBUG_PRINT_ERROR("Insufficient memory to \
+				initialise condition variable\n");
     }
     if ((cond_ret = pthread_cond_init (&out_cond, NULL)) != 0)
     {
        DEBUG_PRINT_ERROR("pthread_cond_init returns non zero for out_cond\n");
        if (cond_ret == EAGAIN)
-         DEBUG_PRINT_ERROR("The system lacked necessary resources(other than mem)\n");
+         DEBUG_PRINT_ERROR("The system lacked necessary \
+				resources(other than mem)\n");
        else if (cond_ret == ENOMEM)
-          DEBUG_PRINT_ERROR("Insufficient memory to initialise condition variable\n");
+          DEBUG_PRINT_ERROR("Insufficient memory to \
+				initialise condition variable\n");
     }
 
     sem_init(&sem_read_msg,0, 0);
@@ -360,7 +366,8 @@ RETURN VALUE
 ========================================================================== */
 omx_aac_aenc::~omx_aac_aenc()
 {
-    DEBUG_PRINT_ERROR("AAC Object getting destroyed comp-deinit=%d\n",m_comp_deinit);
+    DEBUG_PRINT_ERROR("AAC Object getting destroyed comp-deinit=%d\n",
+			m_comp_deinit);
     if ( !m_comp_deinit )
     {
         deinit_encoder();
@@ -630,7 +637,8 @@ loopback_out:
     {
         qsize = 0;
         DEBUG_PRINT("OUT--> Empty Queue state=%d %d %d %d\n",state,
-                     pThis->m_output_ctrl_cmd_q.m_size,pThis->m_output_ctrl_fbd_q.m_size,
+                     pThis->m_output_ctrl_cmd_q.m_size,
+		     pThis->m_output_ctrl_fbd_q.m_size,
                      pThis->m_output_q.m_size);
 
         if(state == OMX_StatePause)
@@ -955,7 +963,8 @@ loopback_in:
         qsize = 0;
         DEBUG_PRINT("IN-->state[%d]cmdq[%d]ebdq[%d]in[%d]\n",\
                              state,pThis->m_input_ctrl_cmd_q.m_size,
-                             pThis->m_input_ctrl_ebd_q.m_size,pThis->m_input_q.m_size);
+                             pThis->m_input_ctrl_ebd_q.m_size,
+				pThis->m_input_q.m_size);
 
         if(state == OMX_StatePause)
         {
@@ -1066,17 +1075,28 @@ OMX_ERRORTYPE omx_aac_aenc::component_init(OMX_STRING role)
     DEBUG_PRINT_ERROR(" component init: role = %s\n",role);
 
     DEBUG_PRINT(" component init: role = %s\n",role);
+    component_Role.nVersion.nVersion = OMX_SPEC_VERSION;
     if (!strcmp(role,"OMX.qcom.audio.encoder.aac"))
     {
         pcm_input = 1;
+        component_Role.nSize = sizeof(role);
+        strlcpy((char *)component_Role.cRole, (const char*)role,
+		sizeof(component_Role.cRole));
         DEBUG_PRINT("\ncomponent_init: Component %s LOADED \n", role);
     } else if (!strcmp(role,"OMX.qcom.audio.encoder.tunneled.aac"))
     {
         pcm_input = 0;
+        component_Role.nSize = sizeof(role);
+        strlcpy((char *)component_Role.cRole, (const char*)role,
+		sizeof(component_Role.cRole));
         DEBUG_PRINT("\ncomponent_init: Component %s LOADED \n", role);
     } else
     {
-        DEBUG_PRINT_ERROR("\ncomponent_init: Component %s LOADED is invalid\n", role);
+        component_Role.nSize = sizeof("\0");
+        strlcpy((char *)component_Role.cRole, (const char*)"\0",
+		sizeof(component_Role.cRole));
+        DEBUG_PRINT_ERROR("\ncomponent_init: Component %s LOADED is invalid\n",
+				role);
         return OMX_ErrorInsufficientResources;
     }
     if(pcm_input)
@@ -1089,7 +1109,8 @@ OMX_ERRORTYPE omx_aac_aenc::component_init(OMX_STRING role)
             return OMX_ErrorInsufficientResources;
 	}
     }
-    m_tmp_out_meta_buf = (OMX_U8*)malloc(sizeof(OMX_U8)*OMX_AAC_OUTPUT_BUFFER_SIZE);
+    m_tmp_out_meta_buf =
+	(OMX_U8*)malloc(sizeof(OMX_U8)*OMX_AAC_OUTPUT_BUFFER_SIZE);
         if ( m_tmp_out_meta_buf == NULL ) {
             DEBUG_PRINT_ERROR("Mem alloc failed for out meta buf\n");
             return OMX_ErrorInsufficientResources;
@@ -1122,7 +1143,8 @@ OMX_ERRORTYPE omx_aac_aenc::component_init(OMX_STRING role)
                 this, (char *)"INPUT_THREAD");
             if (!m_ipc_to_in_th)
             {
-                DEBUG_PRINT_ERROR("ERROR!!! Failed to start Input port thread\n");
+                DEBUG_PRINT_ERROR("ERROR!!! Failed to start \
+				Input port thread\n");
                 return OMX_ErrorInsufficientResources;
             }
         }
@@ -1189,7 +1211,8 @@ OMX_ERRORTYPE  omx_aac_aenc::get_component_version
         DEBUG_PRINT_ERROR("Get Comp Version in Invalid State\n");
         return OMX_ErrorInvalidState;
     }
-    /* TBD -- Return the proper version */
+    componentVersion->nVersion = OMX_SPEC_VERSION;
+    specVersion->nVersion = OMX_SPEC_VERSION;
     return OMX_ErrorNone;
 }
 /**
@@ -1351,8 +1374,8 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 {
                    if (ioctl(m_drv_fd, AUDIO_STOP, 0) == -1)
                     {
-                        DEBUG_PRINT_ERROR("SCP:Idle->Loaded,ioctl stop failed %d\n",\
-                                    errno);
+                        DEBUG_PRINT_ERROR("SCP:Idle->Loaded,ioctl \
+					stop failed %d\n", errno);
                     }
                     nTimestamp=0;
                     ts = 0; 
@@ -1374,24 +1397,31 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 struct msm_audio_stream_config drv_stream_config;
                 struct msm_audio_buf_cfg buf_cfg;
                 struct msm_audio_config pcm_cfg;
-                if(ioctl(m_drv_fd, AUDIO_GET_STREAM_CONFIG, &drv_stream_config) == -1)
+                if(ioctl(m_drv_fd, AUDIO_GET_STREAM_CONFIG, &drv_stream_config)
+			== -1)
                 {
-                    DEBUG_PRINT_ERROR("ioctl AUDIO_GET_STREAM_CONFIG failed, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_GET_STREAM_CONFIG failed, \
+					errno[%d]\n", errno);
                 }
-                if(ioctl(m_drv_fd, AUDIO_SET_STREAM_CONFIG, &drv_stream_config) == -1)
+                if(ioctl(m_drv_fd, AUDIO_SET_STREAM_CONFIG, &drv_stream_config)
+			== -1)
                 {
-                    DEBUG_PRINT_ERROR("ioctl AUDIO_SET_STREAM_CONFIG failed, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_SET_STREAM_CONFIG failed, \
+					errno[%d]\n", errno);
                 }
 
-                if(ioctl(m_drv_fd, AUDIO_GET_AAC_ENC_CONFIG, &drv_aac_enc_config) == -1)
+                if(ioctl(m_drv_fd, AUDIO_GET_AAC_ENC_CONFIG,
+			&drv_aac_enc_config) == -1)
                 {
-                    DEBUG_PRINT_ERROR("ioctl AUDIO_GET_AAC_ENC_CONFIG failed, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_GET_AAC_ENC_CONFIG failed, \
+					errno[%d]\n", errno);
                 }
                 drv_aac_enc_config.channels = m_aac_param.nChannels;
                 drv_aac_enc_config.sample_rate = m_aac_param.nSampleRate;
                 drv_aac_enc_config.bit_rate =  m_aac_param.nBitRate;
                 DEBUG_PRINT("aac config %lu,%lu,%lu %d\n",
-                            m_aac_param.nChannels,m_aac_param.nSampleRate, m_aac_param.nBitRate,m_aac_param.eAACStreamFormat);
+                            m_aac_param.nChannels,m_aac_param.nSampleRate,
+			    m_aac_param.nBitRate,m_aac_param.eAACStreamFormat);
                 switch(m_aac_param.eAACStreamFormat)
                 {
 
@@ -1413,19 +1443,24 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                     default:
                            break;
                 }
-                DEBUG_PRINT("Stream format = %d\n",drv_aac_enc_config.stream_format);
-                if(ioctl(m_drv_fd, AUDIO_SET_AAC_ENC_CONFIG, &drv_aac_enc_config) == -1)
+                DEBUG_PRINT("Stream format = %d\n",
+				drv_aac_enc_config.stream_format);
+                if(ioctl(m_drv_fd, AUDIO_SET_AAC_ENC_CONFIG,
+			&drv_aac_enc_config) == -1)
                 {
-                    DEBUG_PRINT_ERROR("ioctl AUDIO_SET_AAC_ENC_CONFIG failed, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_SET_AAC_ENC_CONFIG failed, \
+					errno[%d]\n", errno);
                 }
-                if (ioctl(m_drv_fd, AUDIO_GET_AAC_CONFIG, &drv_aac_config) == -1) {
-                    DEBUG_PRINT_ERROR("ioctl AUDIO_GET_AAC_CONFIG failed, errno[%d]\n", errno);
+                if (ioctl(m_drv_fd, AUDIO_GET_AAC_CONFIG, &drv_aac_config)
+			== -1) {
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_GET_AAC_CONFIG failed, \
+					errno[%d]\n", errno);
                 }
 
                 drv_aac_config.sbr_on_flag = 0;
                 drv_aac_config.sbr_ps_on_flag = 0;
-				/* Other members of drv_aac_config are not used, so not setting
-				   them */
+				/* Other members of drv_aac_config are not used,
+				 so not setting them */
                 switch(m_aac_param.eAACProfile)
                 {
                     case OMX_AUDIO_AACObjectLC:
@@ -1451,47 +1486,57 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                     }
                     default:
                     {
-                        DEBUG_PRINT_ERROR("Unsupported AAC Profile Type = %d\n", m_aac_param.eAACProfile);
+                        DEBUG_PRINT_ERROR("Unsupported AAC Profile Type = %d\n",
+						m_aac_param.eAACProfile);
                         break;
                     }
                 }
-                DEBUG_PRINT("sbr_flag = %d, sbr_ps_flag = %d\n",drv_aac_config.sbr_on_flag,
-                                   drv_aac_config.sbr_ps_on_flag);
+                DEBUG_PRINT("sbr_flag = %d, sbr_ps_flag = %d\n",
+				drv_aac_config.sbr_on_flag,
+				drv_aac_config.sbr_ps_on_flag);
 
-                if (ioctl(m_drv_fd, AUDIO_SET_AAC_CONFIG, &drv_aac_config) == -1) {
-                    DEBUG_PRINT_ERROR("ioctl AUDIO_SET_AAC_CONFIG failed, errno[%d]\n", errno);
+                if (ioctl(m_drv_fd, AUDIO_SET_AAC_CONFIG, &drv_aac_config)
+			== -1) {
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_SET_AAC_CONFIG failed, \
+					errno[%d]\n", errno);
                 }
 
                 if (ioctl(m_drv_fd, AUDIO_GET_BUF_CFG, &buf_cfg) == -1)
                 {
-                    DEBUG_PRINT_ERROR("ioctl AUDIO_GET_BUF_CFG, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_GET_BUF_CFG, errno[%d]\n",
+					errno);
                 }
                 buf_cfg.meta_info_enable = 1;
                 buf_cfg.frames_per_buf = NUMOFFRAMES;
                 if (ioctl(m_drv_fd, AUDIO_SET_BUF_CFG, &buf_cfg) == -1)
                 {
-                    DEBUG_PRINT_ERROR("ioctl AUDIO_SET_BUF_CFG, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_SET_BUF_CFG, errno[%d]\n",
+					errno);
                 }
                 if(pcm_input)
                 {
                     if (ioctl(m_drv_fd, AUDIO_GET_CONFIG, &pcm_cfg) == -1)
                     {
-                        DEBUG_PRINT_ERROR("ioctl AUDIO_GET_CONFIG, errno[%d]\n", errno);
+                        DEBUG_PRINT_ERROR("ioctl AUDIO_GET_CONFIG, errno[%d]\n",
+					errno);
                     }
                     pcm_cfg.channel_count = m_pcm_param.nChannels;
                     pcm_cfg.sample_rate  =  m_pcm_param.nSamplingRate;
                     pcm_cfg.buffer_size =  input_buffer_size;
                     pcm_cfg.buffer_count =  m_inp_current_buf_count;
-                    DEBUG_PRINT("pcm config %lu %lu\n",m_pcm_param.nChannels,m_pcm_param.nSamplingRate);
+                    DEBUG_PRINT("pcm config %lu %lu\n",m_pcm_param.nChannels,
+				m_pcm_param.nSamplingRate);
 
                     if (ioctl(m_drv_fd, AUDIO_SET_CONFIG, &pcm_cfg) == -1)
                     {
-                        DEBUG_PRINT_ERROR("ioctl AUDIO_SET_CONFIG, errno[%d]\n", errno);
+                        DEBUG_PRINT_ERROR("ioctl AUDIO_SET_CONFIG, errno[%d]\n",
+						errno);
                     }
                 }
                 if(ioctl(m_drv_fd, AUDIO_START, 0) == -1)
                 {
-                    DEBUG_PRINT_ERROR("ioctl AUDIO_START failed, errno[%d]\n", errno);
+                    DEBUG_PRINT_ERROR("ioctl AUDIO_START failed, errno[%d]\n",
+					errno);
                     m_state = OMX_StateInvalid;
                     this->m_cb.EventHandler(&this->m_cmp, this->m_app_data,
                                         OMX_EventError, OMX_ErrorInvalidState,
@@ -1595,7 +1640,8 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 eRet = OMX_ErrorInvalidState;
             } else
             {
-                DEBUG_PRINT_ERROR("SCP--> Executing to %d Not Handled\n",eState);
+                DEBUG_PRINT_ERROR("SCP--> Executing to %d Not Handled\n",
+				eState);
                 eRet = OMX_ErrorBadParameter;
             }
         }
@@ -1634,14 +1680,16 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
             {
                 DEBUG_PRINT("\n Pause --> loaded \n");
                 this->m_cb.EventHandler(&this->m_cmp, this->m_app_data,
-                                        OMX_EventError, OMX_ErrorIncorrectStateTransition,
+                                        OMX_EventError,
+					OMX_ErrorIncorrectStateTransition,
                                         0, NULL );
                 eRet = OMX_ErrorIncorrectStateTransition;
             } else if (eState == OMX_StateWaitForResources)
             {
                 DEBUG_PRINT("\n Pause --> WaitForResources \n");
                 this->m_cb.EventHandler(&this->m_cmp, this->m_app_data,
-                                        OMX_EventError, OMX_ErrorIncorrectStateTransition,
+                                        OMX_EventError,
+					OMX_ErrorIncorrectStateTransition,
                                         0, NULL );
                 eRet = OMX_ErrorIncorrectStateTransition;
             } else if (eState == OMX_StatePause)
@@ -1675,7 +1723,8 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 DEBUG_PRINT("OMXCORE-SM: WaitForResources-->Loaded\n");
             } else if (eState == OMX_StateWaitForResources)
             {
-                DEBUG_PRINT("OMXCORE-SM: WaitForResources-->WaitForResources\n");
+                DEBUG_PRINT("OMXCORE-SM: \
+				WaitForResources-->WaitForResources\n");
                 this->m_cb.EventHandler(&this->m_cmp, this->m_app_data,
                                         OMX_EventError, OMX_ErrorSameState,
                                         0, NULL );
@@ -1707,7 +1756,8 @@ OMX_ERRORTYPE  omx_aac_aenc::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 eRet = OMX_ErrorInvalidState;
             } else
             {
-                DEBUG_PRINT_ERROR("SCP--> %d to %d(Not Handled)\n",m_state,eState);
+                DEBUG_PRINT_ERROR("SCP--> %d to %d(Not Handled)\n",
+					m_state,eState);
                 eRet = OMX_ErrorBadParameter;
             }
         }
@@ -1977,14 +2027,16 @@ bool omx_aac_aenc::execute_omx_flush(OMX_IN OMX_U32 param1, bool cmd_cmpl)
         DEBUG_PRINT("RECIEVED BOTH FLUSH ACK's param1=%lu cmd_cmpl=%d",\
                     param1,cmd_cmpl);
 
-        // If not going to idle state, Send FLUSH complete message to the Client,
-        // now that FLUSH ACK's have been recieved.
+        // If not going to idle state, Send FLUSH complete message 
+	// to the Client, now that FLUSH ACK's have been recieved.
         if (cmd_cmpl)
         {
             m_cb.EventHandler(&m_cmp, m_app_data, OMX_EventCmdComplete,
-                              OMX_CommandFlush, OMX_CORE_INPUT_PORT_INDEX, NULL );
+                              OMX_CommandFlush, OMX_CORE_INPUT_PORT_INDEX,
+				NULL );
             m_cb.EventHandler(&m_cmp, m_app_data, OMX_EventCmdComplete,
-                              OMX_CommandFlush, OMX_CORE_OUTPUT_PORT_INDEX, NULL );
+                              OMX_CommandFlush, OMX_CORE_OUTPUT_PORT_INDEX,
+				NULL );
             DEBUG_PRINT("Inside FLUSH.. sending FLUSH CMPL\n");
         }
         bFlushinprogress = false;
@@ -1998,7 +2050,8 @@ bool omx_aac_aenc::execute_omx_flush(OMX_IN OMX_U32 param1, bool cmd_cmpl)
         post_input(OMX_CommandFlush,
                    OMX_CORE_INPUT_PORT_INDEX,OMX_COMPONENT_GENERATE_COMMAND);
         if (ioctl( m_drv_fd, AUDIO_FLUSH, 0) == -1)
-            DEBUG_PRINT_ERROR("Flush:Input port, ioctl flush failed %d\n",errno);
+            DEBUG_PRINT_ERROR("Flush:Input port, ioctl flush failed %d\n",
+				errno);
         DEBUG_DETAIL("****************************************");
         DEBUG_DETAIL("is_in_th_sleep=%d is_out_th_sleep=%d\n",\
                      is_in_th_sleep,is_out_th_sleep);
@@ -2033,7 +2086,8 @@ bool omx_aac_aenc::execute_omx_flush(OMX_IN OMX_U32 param1, bool cmd_cmpl)
         if (cmd_cmpl)
         {
             m_cb.EventHandler(&m_cmp, m_app_data, OMX_EventCmdComplete,
-                              OMX_CommandFlush, OMX_CORE_INPUT_PORT_INDEX, NULL );
+                              OMX_CommandFlush, OMX_CORE_INPUT_PORT_INDEX,
+				NULL );
         }
     } else if (OMX_CORE_OUTPUT_PORT_INDEX == param1)
     {
@@ -2046,7 +2100,8 @@ bool omx_aac_aenc::execute_omx_flush(OMX_IN OMX_U32 param1, bool cmd_cmpl)
         post_output(OMX_CommandFlush,
                     OMX_CORE_OUTPUT_PORT_INDEX,OMX_COMPONENT_GENERATE_COMMAND);
         if (ioctl( m_drv_fd, AUDIO_FLUSH, 0) ==-1)
-            DEBUG_PRINT_ERROR("Flush:Output port, ioctl flush failed %d\n",errno);
+            DEBUG_PRINT_ERROR("Flush:Output port, ioctl flush failed %d\n",
+				errno);
         DEBUG_DETAIL("****************************************");
         DEBUG_DETAIL("is_in_th_sleep=%d is_out_th_sleep=%d\n",\
                      is_in_th_sleep,is_out_th_sleep);
@@ -2069,14 +2124,16 @@ bool omx_aac_aenc::execute_omx_flush(OMX_IN OMX_U32 param1, bool cmd_cmpl)
             out_th_wakeup();
         }
 
-        // sleep till the FLUSH ACK are done by both the input and output threads
+        // sleep till the FLUSH ACK are done by both the input
+	// and output threads
         wait_for_event();
         // Send FLUSH complete message to the Client,
         // now that FLUSH ACK's have been recieved.
         if (cmd_cmpl)
         {
             m_cb.EventHandler(&m_cmp, m_app_data, OMX_EventCmdComplete,
-                              OMX_CommandFlush, OMX_CORE_OUTPUT_PORT_INDEX, NULL );
+                              OMX_CommandFlush, OMX_CORE_OUTPUT_PORT_INDEX,
+				NULL );
         }
         DEBUG_DETAIL("RECIEVED FLUSH ACK FOR O/P PORT param1=%d",param1);
     } else
@@ -2456,7 +2513,8 @@ OMX_ERRORTYPE  omx_aac_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 portDefn = (OMX_PARAM_PORTDEFINITIONTYPE *) paramData;
 
                 DEBUG_PRINT("OMX_IndexParamPortDefinition " \
-                            "portDefn->nPortIndex = %lu\n",portDefn->nPortIndex);
+                            "portDefn->nPortIndex = %lu\n",
+				portDefn->nPortIndex);
 
                 portDefn->nVersion.nVersion = OMX_SPEC_VERSION;
                 portDefn->nSize = sizeof(portDefn);
@@ -2519,7 +2577,8 @@ OMX_ERRORTYPE  omx_aac_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 {
 
                     portFormatType->eEncoding = OMX_AUDIO_CodingPCM;
-                } else if (OMX_CORE_OUTPUT_PORT_INDEX== portFormatType->nPortIndex)
+                } else if (OMX_CORE_OUTPUT_PORT_INDEX ==
+				portFormatType->nPortIndex)
                 {
                     DEBUG_PRINT("get_parameter: OMX_IndexParamAudioFormat: "\
                                 "%lu\n", portFormatType->nIndex);
@@ -2586,8 +2645,10 @@ OMX_ERRORTYPE  omx_aac_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
          }
         case OMX_IndexParamComponentSuspended:
         {
-            OMX_PARAM_SUSPENSIONTYPE *suspend= (OMX_PARAM_SUSPENSIONTYPE *) paramData;
-            DEBUG_PRINT("get_parameter: OMX_IndexParamComponentSuspended %p\n", suspend);
+            OMX_PARAM_SUSPENSIONTYPE *suspend =
+			(OMX_PARAM_SUSPENSIONTYPE *) paramData;
+            DEBUG_PRINT("get_parameter: OMX_IndexParamComponentSuspended %p\n",
+			suspend);
             break;
         }
         case OMX_IndexParamVideoInit:
@@ -2609,7 +2670,8 @@ OMX_ERRORTYPE  omx_aac_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 priorityMgmtType->nSize = sizeof(priorityMgmtType);
                 priorityMgmtType->nVersion.nVersion = OMX_SPEC_VERSION;
                 priorityMgmtType->nGroupID = m_priority_mgm.nGroupID;
-                priorityMgmtType->nGroupPriority = m_priority_mgm.nGroupPriority;
+                priorityMgmtType->nGroupPriority =
+			m_priority_mgm.nGroupPriority;
                 break;
             }
         case OMX_IndexParamImageInit:
@@ -2626,19 +2688,25 @@ OMX_ERRORTYPE  omx_aac_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
 
         case OMX_IndexParamCompBufferSupplier:
             {
-                DEBUG_PRINT("get_parameter: OMX_IndexParamCompBufferSupplier\n");
+                DEBUG_PRINT("get_parameter: \
+				OMX_IndexParamCompBufferSupplier\n");
                 OMX_PARAM_BUFFERSUPPLIERTYPE *bufferSupplierType
                 = (OMX_PARAM_BUFFERSUPPLIERTYPE*) paramData;
-                DEBUG_PRINT("get_parameter: OMX_IndexParamCompBufferSupplier\n");
+                DEBUG_PRINT("get_parameter: \
+				OMX_IndexParamCompBufferSupplier\n");
 
                 bufferSupplierType->nSize = sizeof(bufferSupplierType);
                 bufferSupplierType->nVersion.nVersion = OMX_SPEC_VERSION;
-                if (OMX_CORE_INPUT_PORT_INDEX   == bufferSupplierType->nPortIndex)
+                if (OMX_CORE_INPUT_PORT_INDEX   ==
+			bufferSupplierType->nPortIndex)
                 {
-                    bufferSupplierType->nPortIndex = OMX_BufferSupplyUnspecified;
-                } else if (OMX_CORE_OUTPUT_PORT_INDEX == bufferSupplierType->nPortIndex)
+                    bufferSupplierType->nPortIndex =
+				OMX_BufferSupplyUnspecified;
+                } else if (OMX_CORE_OUTPUT_PORT_INDEX ==
+				bufferSupplierType->nPortIndex)
                 {
-                    bufferSupplierType->nPortIndex = OMX_BufferSupplyUnspecified;
+                    bufferSupplierType->nPortIndex =
+				OMX_BufferSupplyUnspecified;
                 } else
                 {
                     DEBUG_PRINT_ERROR("get_parameter:"\
@@ -2660,6 +2728,22 @@ OMX_ERRORTYPE  omx_aac_aenc::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 portParamType->nPorts           = 0;
                 portParamType->nStartPortNumber = 0;
                 break;
+            }
+	case OMX_IndexParamStandardComponentRole:
+            {
+                OMX_PARAM_COMPONENTROLETYPE *componentRole;
+                componentRole = (OMX_PARAM_COMPONENTROLETYPE*)paramData;
+                componentRole->nSize = component_Role.nSize;
+                componentRole->nVersion = component_Role.nVersion;
+                strlcpy((char *)componentRole->cRole,
+			(const char*)component_Role.cRole,
+			sizeof(componentRole->cRole));
+                DEBUG_PRINT_ERROR("nSize = %d , nVersion = %d, cRole = %s\n",
+				component_Role.nSize,
+				component_Role.nVersion,
+				component_Role.cRole);
+                break;
+
             }
         default:
             {
@@ -2690,10 +2774,10 @@ OMX_ERRORTYPE  omx_aac_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
         DEBUG_PRINT_ERROR("Returning OMX_ErrorBadParameter\n");
         return OMX_ErrorBadParameter;
     }
-    if (m_state == OMX_StateInvalid)
+    if (m_state != OMX_StateLoaded)
     {
-        DEBUG_PRINT_ERROR("Set Param in Invalid State\n");
-        return OMX_ErrorInvalidState;
+        DEBUG_PRINT_ERROR("set_parameter is not in proper state\n");
+        return OMX_ErrorIncorrectStateOperation;
     }
     if (paramData == NULL)
     {
@@ -2730,23 +2814,29 @@ OMX_ERRORTYPE  omx_aac_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 if (((m_state == OMX_StateLoaded)&&
                      !BITMASK_PRESENT(&m_flags,OMX_COMPONENT_IDLE_PENDING))
                     || (m_state == OMX_StateWaitForResources &&
-                        ((OMX_DirInput == portDefn->eDir && m_inp_bEnabled == true)||
-                         (OMX_DirInput == portDefn->eDir && m_out_bEnabled == true)))
-                    ||(((OMX_DirInput == portDefn->eDir && m_inp_bEnabled == false)||
-                        (OMX_DirInput == portDefn->eDir && m_out_bEnabled == false)) &&
+                        ((OMX_DirInput == portDefn->eDir && 
+				m_inp_bEnabled == true)||
+                         (OMX_DirInput == portDefn->eDir &&
+				m_out_bEnabled == true)))
+                    ||(((OMX_DirInput == portDefn->eDir &&
+				m_inp_bEnabled == false)||
+                        (OMX_DirInput == portDefn->eDir &&
+				m_out_bEnabled == false)) &&
                        (m_state != OMX_StateWaitForResources)))
                 {
                     DEBUG_PRINT("Set Parameter called in valid state\n");
                 } else
                 {
-                    DEBUG_PRINT_ERROR("Set Parameter called in Invalid State\n");
+                    DEBUG_PRINT_ERROR("Set Parameter called in \
+					Invalid State\n");
                     return OMX_ErrorIncorrectStateOperation;
                 }
                 DEBUG_PRINT("OMX_IndexParamPortDefinition portDefn->nPortIndex "
                             "= %lu\n",portDefn->nPortIndex);
                 if (OMX_CORE_INPUT_PORT_INDEX == portDefn->nPortIndex)
                 {
-                    if ( portDefn->nBufferCountActual > OMX_CORE_NUM_INPUT_BUFFERS )
+                    if ( portDefn->nBufferCountActual >
+				OMX_CORE_NUM_INPUT_BUFFERS )
                     {
                         m_inp_act_buf_count = portDefn->nBufferCountActual;
                     } else
@@ -2757,7 +2847,8 @@ OMX_ERRORTYPE  omx_aac_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
 
                 } else if (OMX_CORE_OUTPUT_PORT_INDEX == portDefn->nPortIndex)
                 {
-                    if ( portDefn->nBufferCountActual > OMX_CORE_NUM_OUTPUT_BUFFERS )
+                    if ( portDefn->nBufferCountActual >
+				OMX_CORE_NUM_OUTPUT_BUFFERS )
                     {
                         m_out_act_buf_count = portDefn->nBufferCountActual;
                     } else
@@ -2779,7 +2870,8 @@ OMX_ERRORTYPE  omx_aac_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
 
                 if (m_state != OMX_StateLoaded)
                 {
-                    DEBUG_PRINT_ERROR("Set Parameter called in Invalid State\n");
+                    DEBUG_PRINT_ERROR("Set Parameter called in \
+					Invalid State\n");
                     return OMX_ErrorIncorrectStateOperation;
                 }
                 OMX_PRIORITYMGMTTYPE *priorityMgmtype
@@ -2805,7 +2897,8 @@ OMX_ERRORTYPE  omx_aac_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 if (OMX_CORE_INPUT_PORT_INDEX== portFormatType->nPortIndex)
                 {
                     portFormatType->eEncoding = OMX_AUDIO_CodingPCM;
-                } else if (OMX_CORE_OUTPUT_PORT_INDEX == portFormatType->nPortIndex)
+                } else if (OMX_CORE_OUTPUT_PORT_INDEX ==
+				portFormatType->nPortIndex)
                 {
                     DEBUG_PRINT("set_parameter: OMX_IndexParamAudioFormat:"\
                                 " %lu\n", portFormatType->nIndex);
@@ -2822,7 +2915,8 @@ OMX_ERRORTYPE  omx_aac_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
 
         case OMX_IndexParamCompBufferSupplier:
             {
-                DEBUG_PRINT("set_parameter: OMX_IndexParamCompBufferSupplier\n");
+                DEBUG_PRINT("set_parameter: \
+				OMX_IndexParamCompBufferSupplier\n");
                 OMX_PARAM_BUFFERSUPPLIERTYPE *bufferSupplierType
                 = (OMX_PARAM_BUFFERSUPPLIERTYPE*) paramData;
                 DEBUG_PRINT("set_param: OMX_IndexParamCompBufferSupplier %d",\
@@ -2831,12 +2925,14 @@ OMX_ERRORTYPE  omx_aac_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 if (bufferSupplierType->nPortIndex == OMX_CORE_INPUT_PORT_INDEX
                     || bufferSupplierType->nPortIndex == OMX_CORE_OUTPUT_PORT_INDEX)
                 {
-                    DEBUG_PRINT("set_parameter:OMX_IndexParamCompBufferSupplier\n");
-                    m_buffer_supplier.eBufferSupplier = bufferSupplierType->eBufferSupplier;
+                    DEBUG_PRINT("set_parameter:\
+				OMX_IndexParamCompBufferSupplier\n");
+                    m_buffer_supplier.eBufferSupplier =
+				bufferSupplierType->eBufferSupplier;
                 } else
                 {
-                    DEBUG_PRINT_ERROR("set_param:IndexParamCompBufferSup %08x\n", \
-                                      eRet);
+                    DEBUG_PRINT_ERROR("set_param:IndexParamCompBufferSup \ 
+					%08x\n", eRet);
                     eRet = OMX_ErrorBadPortIndex;
                 }
 
@@ -2855,7 +2951,8 @@ OMX_ERRORTYPE  omx_aac_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                         sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
 
                     DEBUG_PRINT("set_pcm_parameter: %lu %lu",\
-                                 m_pcm_param.nChannels,m_pcm_param.nSamplingRate);
+                                m_pcm_param.nChannels,
+				m_pcm_param.nSamplingRate);
                 } else
                 {
                     DEBUG_PRINT_ERROR("Set_parameter:OMX_IndexParamAudioPcm "
@@ -2876,8 +2973,9 @@ OMX_ERRORTYPE  omx_aac_aenc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 componentRole = (OMX_PARAM_COMPONENTROLETYPE*)paramData;
                 component_Role.nSize = componentRole->nSize;
                 component_Role.nVersion = componentRole->nVersion;
-                strcpy((char *)component_Role.cRole,
-                       (const char*)componentRole->cRole);
+                strlcpy((char *)component_Role.cRole,
+                       (const char*)componentRole->cRole,
+			sizeof(component_Role.cRole));
                 break;
             }
 
@@ -3007,8 +3105,8 @@ OMX_ERRORTYPE  omx_aac_aenc::set_config(OMX_IN OMX_HANDLETYPE      hComp,
     {
         case OMX_IndexConfigAudioVolume:
             {
-                OMX_AUDIO_CONFIG_VOLUMETYPE *vol = (OMX_AUDIO_CONFIG_VOLUMETYPE*)
-                                                   configData;
+                OMX_AUDIO_CONFIG_VOLUMETYPE *vol =
+			(OMX_AUDIO_CONFIG_VOLUMETYPE*)configData;
                 if (vol->nPortIndex == OMX_CORE_INPUT_PORT_INDEX)
                 {
                     if ((vol->sVolume.nValue <= OMX_AENC_MAX) &&
@@ -3076,9 +3174,10 @@ RETURN VALUE
   OMX Error None if everything successful.
 
 ========================================================================== */
-OMX_ERRORTYPE  omx_aac_aenc::get_extension_index(OMX_IN OMX_HANDLETYPE      hComp,
-                                                  OMX_IN OMX_STRING      paramName,
-                                                  OMX_OUT OMX_INDEXTYPE* indexType)
+OMX_ERRORTYPE  omx_aac_aenc::get_extension_index(
+				OMX_IN OMX_HANDLETYPE      hComp,
+				OMX_IN OMX_STRING      paramName,
+				OMX_OUT OMX_INDEXTYPE* indexType)
 {
     if((hComp == NULL) || (paramName == NULL) || (indexType == NULL))
     {
@@ -3090,7 +3189,8 @@ OMX_ERRORTYPE  omx_aac_aenc::get_extension_index(OMX_IN OMX_HANDLETYPE      hCom
         DEBUG_PRINT_ERROR("Get Extension Index in Invalid State\n");
         return OMX_ErrorInvalidState;
     }
-  if(strncmp(paramName,"OMX.Qualcomm.index.audio.sessionId",strlen("OMX.Qualcomm.index.audio.sessionId")) == 0)
+  if(strncmp(paramName,"OMX.Qualcomm.index.audio.sessionId",
+	strlen("OMX.Qualcomm.index.audio.sessionId")) == 0)
   {
       *indexType =(OMX_INDEXTYPE)QOMX_IndexParamAudioSessionId;
       DEBUG_PRINT("Extension index type - %d\n", *indexType);
@@ -3193,7 +3293,7 @@ OMX_ERRORTYPE  omx_aac_aenc::allocate_input_buffer
   if(m_inp_current_buf_count < m_inp_act_buf_count)
   {
     buf_ptr = (char *) calloc((nBufSize + \
-                               sizeof(OMX_BUFFERHEADERTYPE)+sizeof(META_IN)) , 1);
+		sizeof(OMX_BUFFERHEADERTYPE)+sizeof(META_IN)) , 1);
 
     if(hComp == NULL)
     {
@@ -3218,9 +3318,9 @@ OMX_ERRORTYPE  omx_aac_aenc::allocate_input_buffer
         m_input_buf_hdrs.insert(bufHdr, NULL);
 
         m_inp_current_buf_count++;
-        DEBUG_PRINT("AIB:bufHdr %p bufHdr->pBuffer %p m_inp_buf_cnt=%d bytes=%lu", \
-                    bufHdr, bufHdr->pBuffer,m_inp_current_buf_count,
-                    bytes);
+        DEBUG_PRINT("AIB:bufHdr %p bufHdr->pBuffer %p m_inp_buf_cnt=%d \
+		bytes=%lu",bufHdr, bufHdr->pBuffer,m_inp_current_buf_count,
+		bytes);
 
     } else
     {
@@ -3265,7 +3365,8 @@ OMX_ERRORTYPE  omx_aac_aenc::allocate_output_buffer
             *bufferHdr = bufHdr;
             memset(bufHdr,0,sizeof(OMX_BUFFERHEADERTYPE));
 
-            bufHdr->pBuffer           = (OMX_U8 *)((buf_ptr)+ sizeof(OMX_BUFFERHEADERTYPE));
+            bufHdr->pBuffer           = (OMX_U8 *)((buf_ptr)+
+					sizeof(OMX_BUFFERHEADERTYPE));
 
             bufHdr->nSize             = sizeof(OMX_BUFFERHEADERTYPE);
             bufHdr->nVersion.nVersion = OMX_SPEC_VERSION;
@@ -3554,8 +3655,8 @@ OMX_ERRORTYPE  omx_aac_aenc::use_input_buffer
             memset(bufHdr,0,sizeof(OMX_BUFFERHEADERTYPE));
 
             bufHdr->pBuffer           = (OMX_U8 *)(buffer);
-            DEBUG_PRINT("use_input_buffer:bufHdr %p bufHdr->pBuffer %p bytes=%lu", \
-                        bufHdr, bufHdr->pBuffer,bytes);
+            DEBUG_PRINT("use_input_buffer:bufHdr %p bufHdr->pBuffer %p \
+			bytes=%lu", bufHdr, bufHdr->pBuffer,bytes);
             bufHdr->nSize             = sizeof(OMX_BUFFERHEADERTYPE);
             bufHdr->nVersion.nVersion = OMX_SPEC_VERSION;
             bufHdr->nAllocLen         = nBufSize;
@@ -3643,8 +3744,8 @@ OMX_ERRORTYPE  omx_aac_aenc::use_output_buffer
             memset(bufHdr,0,sizeof(OMX_BUFFERHEADERTYPE));
 
             bufHdr->pBuffer           = (OMX_U8 *)(buffer);
-            DEBUG_PRINT("use_output_buffer:bufHdr %p bufHdr->pBuffer %p len=%lu",
-                        bufHdr, bufHdr->pBuffer,bytes);
+            DEBUG_PRINT("use_output_buffer:bufHdr %p bufHdr->pBuffer %p \
+			len=%lu\n", bufHdr, bufHdr->pBuffer,bytes);
             bufHdr->nSize             = sizeof(OMX_BUFFERHEADERTYPE);
             bufHdr->nVersion.nVersion = OMX_SPEC_VERSION;
             bufHdr->nAllocLen         = nBufSize;
@@ -3739,8 +3840,10 @@ OMX_ERRORTYPE  omx_aac_aenc::free_buffer(OMX_IN OMX_HANDLETYPE         hComp,
         (BITMASK_PRESENT(&m_flags ,OMX_COMPONENT_LOADING_PENDING)))
     {
         DEBUG_PRINT(" free buffer while Component in Loading pending\n");
-    } else if ((m_inp_bEnabled == OMX_FALSE && port == OMX_CORE_INPUT_PORT_INDEX)||
-               (m_out_bEnabled == OMX_FALSE && port == OMX_CORE_OUTPUT_PORT_INDEX))
+    } else if ((m_inp_bEnabled == OMX_FALSE &&
+		port == OMX_CORE_INPUT_PORT_INDEX)||
+               (m_out_bEnabled == OMX_FALSE &&
+		port == OMX_CORE_OUTPUT_PORT_INDEX))
     {
         DEBUG_PRINT("Free Buffer while port %lu disabled\n", port);
     } else if (m_state == OMX_StateExecuting || m_state == OMX_StatePause)
@@ -3855,7 +3958,8 @@ OMX_ERRORTYPE  omx_aac_aenc::free_buffer(OMX_IN OMX_HANDLETYPE         hComp,
 
             // Send the callback now
             BITMASK_CLEAR((&m_flags),OMX_COMPONENT_LOADING_PENDING);
-            DEBUG_PRINT("Before OMX_StateLoaded OMX_COMPONENT_GENERATE_EVENT\n");
+            DEBUG_PRINT("Before OMX_StateLoaded \
+			OMX_COMPONENT_GENERATE_EVENT\n");
             post_command(OMX_CommandStateSet,
                          OMX_StateLoaded,OMX_COMPONENT_GENERATE_EVENT);
             DEBUG_PRINT("After OMX_StateLoaded OMX_COMPONENT_GENERATE_EVENT\n");
@@ -3876,8 +3980,9 @@ OMX_ERRORTYPE  omx_aac_aenc::free_buffer(OMX_IN OMX_HANDLETYPE         hComp,
  @param buffer pointer to buffer header
  @return error status
  */
-OMX_ERRORTYPE  omx_aac_aenc::empty_this_buffer(OMX_IN OMX_HANDLETYPE         hComp,
-                                                OMX_IN OMX_BUFFERHEADERTYPE* buffer)
+OMX_ERRORTYPE  omx_aac_aenc::empty_this_buffer(
+				OMX_IN OMX_HANDLETYPE         hComp,
+				OMX_IN OMX_BUFFERHEADERTYPE* buffer)
 {
     OMX_ERRORTYPE eRet = OMX_ErrorNone;
 
@@ -4031,8 +4136,10 @@ OMX_ERRORTYPE  omx_aac_aenc::fill_this_buffer_proxy
                          nReadbytes,nNumOutputBuf);
             szadifhr = AUDAAC_MAX_ADIF_HEADER_LENGTH; 
             numframes =  *m_tmp_out_meta_buf;
-            metainfo  = ((sizeof(ENC_META_OUT) * numframes)+ sizeof(unsigned char));
-            audaac_rec_install_adif_header_variable(0,sample_idx, m_aac_param.nChannels);
+            metainfo  = ((sizeof(ENC_META_OUT) * numframes)+
+			sizeof(unsigned char));
+            audaac_rec_install_adif_header_variable(0,sample_idx,
+						m_aac_param.nChannels);
             memcpy(buffer->pBuffer,m_tmp_out_meta_buf,metainfo);
             memcpy(buffer->pBuffer + metainfo,&audaac_header_adif[0],szadifhr);
             memcpy(buffer->pBuffer + metainfo + szadifhr,
@@ -4055,8 +4162,10 @@ OMX_ERRORTYPE  omx_aac_aenc::fill_this_buffer_proxy
                 &&(mp4ff_flag == 0))
         {
             DEBUG_PRINT("OMX_AUDIO_AACStreamFormatMP4FF\n");
-            audaac_rec_install_mp4ff_header_variable(0,sample_idx,m_aac_param.nChannels);
-            memcpy(buffer->pBuffer,&audaac_header_mp4ff[0],AUDAAC_MAX_MP4FF_HEADER_LENGTH);
+            audaac_rec_install_mp4ff_header_variable(0,sample_idx,
+							m_aac_param.nChannels);
+            memcpy(buffer->pBuffer,&audaac_header_mp4ff[0],
+			AUDAAC_MAX_MP4FF_HEADER_LENGTH);
             buffer->nFilledLen = AUDAAC_MAX_MP4FF_HEADER_LENGTH;
             buffer->nTimeStamp = 0;
             buffer->nFlags = OMX_BUFFERFLAG_CODECCONFIG;
@@ -4084,7 +4193,8 @@ OMX_ERRORTYPE  omx_aac_aenc::fill_this_buffer_proxy
         }
 
          meta_out = (ENC_META_OUT *)(buffer->pBuffer + sizeof(unsigned char));
-         buffer->nTimeStamp = (((OMX_TICKS)meta_out->msw_ts << 32)+ meta_out->lsw_ts);
+         buffer->nTimeStamp = (((OMX_TICKS)meta_out->msw_ts << 32)+
+				meta_out->lsw_ts);
 
          ts += frameduration;
          buffer->nTimeStamp = ts;
@@ -4092,9 +4202,11 @@ OMX_ERRORTYPE  omx_aac_aenc::fill_this_buffer_proxy
          buffer->nFlags |= meta_out->nflags;
          buffer->nOffset =  meta_out->offset_to_frame + 1;
          buffer->nFilledLen = nReadbytes - buffer->nOffset + szadifhr;
-         DEBUG_PRINT("nflags %d frame_size %d offset_to_frame %d timestamp %lld\n",\
-             meta_out->nflags,meta_out->frame_size,meta_out->offset_to_frame,
-             buffer->nTimeStamp);
+         DEBUG_PRINT("nflags %d frame_size %d offset_to_frame %d \
+		timestamp %lld\n", meta_out->nflags,
+		meta_out->frame_size,
+		meta_out->offset_to_frame,
+		buffer->nTimeStamp);
 
          if ((buffer->nFlags & OMX_BUFFERFLAG_EOS) == OMX_BUFFERFLAG_EOS )
          {
@@ -4130,7 +4242,7 @@ OMX_ERRORTYPE  omx_aac_aenc::fill_this_buffer_proxy
           else
           {
               frame_done_cb((OMX_BUFFERHEADERTYPE *)buffer);
-              DEBUG_PRINT("FTBP*******************************************************\n");
+              DEBUG_PRINT("FTBP*******************************************\n");
 
           }
 
@@ -4640,7 +4752,8 @@ void  omx_aac_aenc::audaac_rec_install_adif_header_variable (OMX_U16  byte_num,
   for (pfe_index=0; pfe_index < num_pfe+1; pfe_index++) {
 
 
-     if (variable_bit_rate == OMX_FALSE) { /* impossible, put dummy value for now */
+     if (variable_bit_rate == OMX_FALSE) {
+	/* impossible, put dummy value for now */
        audaac_rec_install_bits(audaac_header_adif, 
                                AAC_BUFFER_FULLNESS_SIZE, 
                                0,
