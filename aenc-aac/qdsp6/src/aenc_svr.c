@@ -106,7 +106,7 @@ struct aac_ipc_info *omx_aac_thread_create(
 
     aac_info->client_data = client_data;
     aac_info->process_msg_cb = cb;
-    strcpy(aac_info->thread_name,th_name);
+    strlcpy(aac_info->thread_name, th_name, sizeof(aac_info->thread_name));
 
     if (pipe(fds))
     {
@@ -159,7 +159,7 @@ struct aac_ipc_info *omx_aac_event_thread_create(
 
     aac_info->client_data = client_data;
     aac_info->process_msg_cb = cb;
-    strcpy(aac_info->thread_name,th_name);
+    strlcpy(aac_info->thread_name, th_name, sizeof(aac_info->thread_name));
 
     if (pipe(fds))
     {

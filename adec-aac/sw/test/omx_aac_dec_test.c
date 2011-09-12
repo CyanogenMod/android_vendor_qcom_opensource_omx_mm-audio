@@ -647,8 +647,8 @@ int main(int argc, char **argv)
       channels = atoi(argv[3]);
       pcmplayback = atoi(argv[4]);
       filewrite = atoi(argv[5]);
-      strncpy((char *)out_filename,argv[1],strlen(argv[1]));
-      strcat((char *)out_filename,".wav");
+      strlcpy((char *)out_filename,argv[1],sizeof((char *)out_filename));
+      strlcat((char *)out_filename,".wav",sizeof((char *)out_filename));
     } else {
 
         DEBUG_PRINT(" invalid format: \n");
@@ -1177,8 +1177,8 @@ static int open_audio_file ()
         DEBUG_PRINT("\no/p file %s could NOT be opened\n",
                                          out_filename);
         error_code = -1;
+        return error_code;
       }
-
       header_len = fwrite(&hdr,1,sizeof(hdr),outputBufferFile);
       if (header_len <= 0) {
         DEBUG_PRINT("Invalid Wav header \n");

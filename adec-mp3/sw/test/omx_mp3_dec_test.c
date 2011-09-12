@@ -902,7 +902,8 @@ void* thread_function(void* data)
    int bytes_writen = 0;
 
 #ifdef AUDIOV2
-strncpy(adec_mp3_inst1.device,"speaker_stereo_rx",strlen("speaker_stereo_rx"));
+strlcpy(adec_mp3_inst1.device,"speaker_stereo_rx",
+			sizeof(adec_mp3_inst1.device));
 adec_mp3_inst1.control=0;
 #endif
 
@@ -2001,6 +2002,7 @@ static int open_audio_file (struct adec_appdata* adec_appdata)
          DEBUG_PRINT("\no/p file %s could NOT be opened\n",
                        adec_appdata->out_filename);
          error_code = -1;
+         return error_code;
       }
 
       header_len = fwrite(&hdr,1,sizeof(hdr),adec_appdata->outputBufferFile);

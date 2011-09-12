@@ -106,7 +106,7 @@ struct amr_ipc_info *omx_amr_thread_create(
 
     amr_info->client_data = client_data;
     amr_info->process_msg_cb = cb;
-    strcpy(amr_info->thread_name,th_name);
+    strlcpy(amr_info->thread_name, th_name, sizeof(amr_info->thread_name));
 
     if (pipe(fds))
     {
@@ -159,7 +159,7 @@ struct amr_ipc_info *omx_amr_event_thread_create(
 
     amr_info->client_data = client_data;
     amr_info->process_msg_cb = cb;
-    strcpy(amr_info->thread_name,th_name);
+    strlcpy(amr_info->thread_name, th_name, sizeof(amr_info->thread_name));
 
     if (pipe(fds))
     {

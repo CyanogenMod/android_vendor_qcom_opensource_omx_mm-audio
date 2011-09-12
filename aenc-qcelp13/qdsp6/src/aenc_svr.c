@@ -106,7 +106,8 @@ struct qcelp13_ipc_info *omx_qcelp13_thread_create(
 
     qcelp13_info->client_data = client_data;
     qcelp13_info->process_msg_cb = cb;
-    strcpy(qcelp13_info->thread_name,th_name);
+    strlcpy(qcelp13_info->thread_name, th_name,
+			sizeof(qcelp13_info->thread_name));
 
     if (pipe(fds))
     {
@@ -159,7 +160,8 @@ struct qcelp13_ipc_info *omx_qcelp13_event_thread_create(
 
     qcelp13_info->client_data = client_data;
     qcelp13_info->process_msg_cb = cb;
-    strcpy(qcelp13_info->thread_name,th_name);
+    strlcpy(qcelp13_info->thread_name, th_name,
+		sizeof(qcelp13_info->thread_name));
 
     if (pipe(fds))
     {

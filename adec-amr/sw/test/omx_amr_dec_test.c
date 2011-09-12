@@ -677,8 +677,8 @@ int main(int argc, char **argv)
       filewrite = atoi(argv[5]);
       frameFormat = atoi(argv[6]);
       DEBUG_PRINT("argv[7]- frameFormat = %d\n", frameFormat);
-      strncpy((char *)out_filename,argv[1],strlen(argv[1]));
-      strcat((char *)out_filename,".wav");
+      strlcpy((char *)out_filename,argv[1],sizeof((char *)out_filename));
+      strlcat((char *)out_filename,".wav",sizeof((char *)out_filename));
 
     }
     else
@@ -858,7 +858,7 @@ int Init_Decoder(OMX_STRING audio_component)
 {
     DEBUG_PRINT("Inside %s \n", __FUNCTION__);
     OMX_ERRORTYPE omxresult;
-    OMX_U32 total = 0;
+    OMX_U32 total = 0,total1 = 0;
     unsigned int i = 0;
     OMX_U8** audCompNames;
     typedef OMX_U8* OMX_U8_PTR;
@@ -915,12 +915,15 @@ int Init_Decoder(OMX_STRING audio_component)
                 free(audCompNames);
                 return -1;
             }
+            memset(&audCompNames[i],0,sizeof(audCompNames[i]));
         }
+	total1 = total;
         DEBUG_PRINT("Before calling OMX_GetComponentsOfRole()\n");
         OMX_GetComponentsOfRole(role, &total, audCompNames);
         DEBUG_PRINT("\nComponents of Role:%s\n", role);
         for (i = 0; i < total; ++i)
         {
+            if(i<total1)
             DEBUG_PRINT("\n Found Component[%s]\n",audCompNames[i]);
             {
                 componentfound = true;
@@ -936,6 +939,9 @@ int Init_Decoder(OMX_STRING audio_component)
     if(componentfound == false)
     {
         DEBUG_PRINT("\n Not found audiocomponent = %p\n",audiocomponent);
+        for (i = 0; i < total1; ++i)
+                    free(audCompNames[i]);
+        free(audCompNames);
         return -1;
     }
 
@@ -943,6 +949,8 @@ int Init_Decoder(OMX_STRING audio_component)
                         (OMX_STRING)audio_component, NULL, &call_back);
     if (FAILED(omxresult)) {
         DEBUG_PRINT("\nFailed to Load the component:%s\n", audio_component);
+        for (i = 0; i < total1; ++i)
+                    free(audCompNames[i]);
     return -1;
     }
     else
@@ -957,6 +965,9 @@ int Init_Decoder(OMX_STRING audio_component)
 
     if(FAILED(omxresult)) {
         DEBUG_PRINT("\nFailed to get Port Param\n");
+        for (i = 0; i < total1; ++i)
+                    free(audCompNames[i]);
+    free(audCompNames);
     return -1;
     }
     else
@@ -965,6 +976,9 @@ int Init_Decoder(OMX_STRING audio_component)
         DEBUG_PRINT("\nportParam.nStartPortNumber:%lu\n",
                                              portParam.nStartPortNumber);
     }
+    for (i = 0; i < total1; ++i)
+                free(audCompNames[i]);
+    free(audCompNames);
     return 0;
 }
 
@@ -1240,6 +1254,7 @@ static int open_audio_file ()
         DEBUG_PRINT("\ni/p file %s could NOT be opened\n",
                                          in_filename);
         error_code = -1;
+        return error_code;
     }
     DEBUG_PRINT("Setting the file pointer to the beginging of the byte");
     fseek(inputBufferFile, 0, SEEK_SET);
@@ -1254,6 +1269,7 @@ static int open_audio_file ()
             DEBUG_PRINT("\no/p file %s could NOT be opened\n",
                                              out_filename);
             error_code = -1;
+            return error_code;
         }
 
         header_len = fwrite(&hdr,1,sizeof(hdr),outputBufferFile);

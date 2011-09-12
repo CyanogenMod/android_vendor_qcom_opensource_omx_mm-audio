@@ -267,11 +267,22 @@ omx_amr_aenc::omx_amr_aenc(): m_tmp_meta_buf(NULL),
         m_state(OMX_StateInvalid),
         m_ipc_to_in_th(NULL),
         m_ipc_to_out_th(NULL),
-        m_ipc_to_cmd_th(NULL)
+        m_ipc_to_cmd_th(NULL),
+        pcm_input(0),
+        m_volume(25),
+        m_session_id(0),
+        nNumOutputBuf(0),
+        nNumInputBuf(0)
 {
     int cond_ret = 0;
+    component_Role.nSize = 0;
     memset(&m_cmp, 0, sizeof(m_cmp));
     memset(&m_cb, 0, sizeof(m_cb));
+    memset(&m_pcm_param, 0, sizeof(m_pcm_param));
+    memset(&m_amr_param, 0, sizeof(m_amr_param));
+    memset(&m_amr_pb_stats, 0, sizeof(m_amr_pb_stats));
+    memset(&m_buffer_supplier, 0, sizeof(m_buffer_supplier));
+    memset(&m_priority_mgm, 0, sizeof(m_priority_mgm));
 
     pthread_mutexattr_init(&m_lock_attr);
     pthread_mutex_init(&m_lock, &m_lock_attr);

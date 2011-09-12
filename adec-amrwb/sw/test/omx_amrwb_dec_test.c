@@ -925,7 +925,10 @@ int Init_Decoder(OMX_STRING audio_component)
     if (FAILED(omxresult))
     {
         DEBUG_PRINT("\nFailed to Load the component:%s\n", audio_component);
-        return -1;
+        for (i = 0; i < total; ++i)
+            free(audCompNames[i]);
+	free(audCompNames);
+            return -1;
     }
     else
     {
@@ -940,6 +943,9 @@ int Init_Decoder(OMX_STRING audio_component)
     if(FAILED(omxresult))
     {
         DEBUG_PRINT("\nFailed to get Port Param\n");
+        for (i = 0; i < total; ++i)
+            free(audCompNames[i]);
+	free(audCompNames);
         return -1;
     }
     else
@@ -948,6 +954,9 @@ int Init_Decoder(OMX_STRING audio_component)
         DEBUG_PRINT("\nportParam.nStartPortNumber:%lu\n",
                                              portParam.nStartPortNumber);
     }
+    for (i = 0; i < total; ++i)
+        free(audCompNames[i]);
+    free(audCompNames);
     return 0;
 }
 
@@ -1247,6 +1256,7 @@ static int open_audio_file ()
             DEBUG_PRINT("\no/p file %s could NOT be opened\n",
                                              outfilename);
             error_code = -1;
+            return error_code;
         }
 
         header_len = fwrite(&hdr,1,sizeof(hdr),outputBufferFile);

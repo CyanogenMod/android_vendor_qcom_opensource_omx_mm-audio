@@ -270,11 +270,19 @@ omx_aac_aenc::omx_aac_aenc(): m_tmp_meta_buf(NULL),
         m_state(OMX_StateInvalid),
         m_ipc_to_in_th(NULL),
         m_ipc_to_out_th(NULL),
-        m_ipc_to_cmd_th(NULL)
+        m_ipc_to_cmd_th(NULL),
+        nNumOutputBuf(0),
+        m_session_id(0)
 {
     int cond_ret = 0;
+    component_Role.nSize = 0;
     memset(&m_cmp, 0, sizeof(m_cmp));
     memset(&m_cb, 0, sizeof(m_cb));
+    memset(&m_aac_pb_stats, 0, sizeof(m_aac_pb_stats));
+    memset(&m_pcm_param, 0, sizeof(m_pcm_param));
+    memset(&m_aac_param, 0, sizeof(m_aac_param));
+    memset(&m_buffer_supplier, 0, sizeof(m_buffer_supplier));
+    memset(&m_priority_mgm, 0, sizeof(m_priority_mgm));
 
     pthread_mutexattr_init(&m_lock_attr);
     pthread_mutex_init(&m_lock, &m_lock_attr);
@@ -4134,6 +4142,8 @@ OMX_ERRORTYPE  omx_aac_aenc::fill_this_buffer_proxy
             DEBUG_DETAIL("FTBP->Al_len[%d]buf[%p]size[%d]numOutBuf[%d]\n",\
                          buffer->nAllocLen,m_tmp_out_meta_buf,
                          nReadbytes,nNumOutputBuf);
+            if(*m_tmp_out_meta_buf <= 0)
+                return OMX_ErrorBadParameter;
             szadifhr = AUDAAC_MAX_ADIF_HEADER_LENGTH; 
             numframes =  *m_tmp_out_meta_buf;
             metainfo  = ((sizeof(ENC_META_OUT) * numframes)+

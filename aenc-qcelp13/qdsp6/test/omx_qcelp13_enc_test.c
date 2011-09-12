@@ -1049,12 +1049,13 @@ static int open_audio_file ()
 
     DEBUG_PRINT("Inside %s filename=%s\n", __FUNCTION__, out_filename);
     outputBufferFile = fopen (out_filename, "wb");
-    fseek(outputBufferFile, QCP_HEADER_SIZE,SEEK_SET);
     if (outputBufferFile == NULL) {
         DEBUG_PRINT("\ni/p file %s could NOT be opened\n",
                                          out_filename);
     error_code = -1;
+    return error_code;
     }
+    fseek(outputBufferFile, QCP_HEADER_SIZE, SEEK_SET);
     return error_code;
 }
 

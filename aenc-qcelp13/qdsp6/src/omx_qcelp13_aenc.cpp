@@ -266,11 +266,23 @@ omx_qcelp13_aenc::omx_qcelp13_aenc(): m_tmp_meta_buf(NULL),
         m_state(OMX_StateInvalid),
         m_ipc_to_in_th(NULL),
         m_ipc_to_out_th(NULL),
-        m_ipc_to_cmd_th(NULL)
+        m_ipc_to_cmd_th(NULL),
+        m_volume(25),
+        pcm_input(0),
+        nNumOutputBuf(0),
+        m_session_id(0),
+        m_ipc_to_event_th(NULL),
+        nNumInputBuf(0)
 {
     int cond_ret = 0;
+    component_Role.nSize = 0;
     memset(&m_cmp, 0, sizeof(m_cmp));
     memset(&m_cb, 0, sizeof(m_cb));
+    memset(&m_qcelp13_pb_stats, 0, sizeof(m_qcelp13_pb_stats));
+    memset(&m_qcelp13_param, 0, sizeof(m_qcelp13_param));
+    memset(&m_pcm_param, 0, sizeof(m_pcm_param));
+    memset(&m_buffer_supplier, 0, sizeof(m_buffer_supplier));
+    memset(&m_priority_mgm, 0, sizeof(m_priority_mgm));
 
     pthread_mutexattr_init(&m_lock_attr);
     pthread_mutex_init(&m_lock, &m_lock_attr);

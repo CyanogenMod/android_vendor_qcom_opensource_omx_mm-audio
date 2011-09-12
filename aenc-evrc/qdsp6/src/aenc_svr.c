@@ -106,7 +106,7 @@ struct evrc_ipc_info *omx_evrc_thread_create(
 
     evrc_info->client_data = client_data;
     evrc_info->process_msg_cb = cb;
-    strcpy(evrc_info->thread_name,th_name);
+    strlcpy(evrc_info->thread_name, th_name, sizeof(evrc_info->thread_name));
 
     if (pipe(fds))
     {
@@ -159,7 +159,7 @@ struct evrc_ipc_info *omx_evrc_event_thread_create(
 
     evrc_info->client_data = client_data;
     evrc_info->process_msg_cb = cb;
-    strcpy(evrc_info->thread_name,th_name);
+    strlcpy(evrc_info->thread_name, th_name, sizeof(evrc_info->thread_name));
 
     if (pipe(fds))
     {
