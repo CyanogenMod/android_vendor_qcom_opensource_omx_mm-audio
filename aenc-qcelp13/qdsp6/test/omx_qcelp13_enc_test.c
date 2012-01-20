@@ -1,6 +1,6 @@
 
 /*--------------------------------------------------------------------------
-Copyright (c) 2010, Code Aurora Forum. All rights reserved.
+Copyright (c) 2010-2012, Code Aurora Forum. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -866,7 +866,7 @@ int Play_Encoder()
         /* Allocate buffer on decoder's i/p port */
         error = Allocate_Buffer(qcelp13_enc_handle, &pInputBufHdrs, inputportFmt.nPortIndex,
                             input_buf_cnt, inputportFmt.nBufferSize);
-        if (error != OMX_ErrorNone) {
+        if (error != OMX_ErrorNone || pInputBufHdrs == NULL) {
             DEBUG_PRINT ("\nOMX_AllocateBuffer Input buffer error\n");
         return -1;
     }
@@ -879,7 +879,7 @@ int Play_Encoder()
     /* Allocate buffer on encoder's O/Pp port */
     error = Allocate_Buffer(qcelp13_enc_handle, &pOutputBufHdrs, outputportFmt.nPortIndex,
                             output_buf_cnt, outputportFmt.nBufferSize);
-    if (error != OMX_ErrorNone) {
+    if (error != OMX_ErrorNone || pOutputBufHdrs == NULL ) {
         DEBUG_PRINT ("\nOMX_AllocateBuffer Output buffer error\n");
     return -1;
     }
