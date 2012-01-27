@@ -244,7 +244,6 @@ omx_amr_aenc::omx_amr_aenc(): m_tmp_meta_buf(NULL),
         m_tmp_out_meta_buf(NULL),
         m_flush_cnt(255),
         m_comp_deinit(0),
-        m_is_alloc_buf(0),
         m_app_data(NULL),
         m_drv_fd(-1),
         bFlushinprogress(0),
@@ -3355,7 +3354,6 @@ OMX_ERRORTYPE  omx_amr_aenc::allocate_buffer
         if (allocate_done())
         {
             DEBUG_PRINT("allocate_buffer:  after allocate_done \n");
-            m_is_alloc_buf++;
             if (BITMASK_PRESENT(&m_flags,OMX_COMPONENT_IDLE_PENDING))
             {
                 BITMASK_CLEAR(&m_flags, OMX_COMPONENT_IDLE_PENDING);
@@ -3786,10 +3784,7 @@ OMX_ERRORTYPE  omx_amr_aenc::free_buffer(OMX_IN OMX_HANDLETYPE         hComp,
                 //access only in IL client context
                 DEBUG_PRINT("Free_Buf:in_buffer[%p]\n",buffer);
                 m_input_buf_hdrs.erase(buffer);
-                if (m_is_alloc_buf)
-                {
-                    free(buffer);
-                }
+                free(buffer);
                 m_inp_current_buf_count--;
             } else
             {
@@ -3823,10 +3818,7 @@ OMX_ERRORTYPE  omx_amr_aenc::free_buffer(OMX_IN OMX_HANDLETYPE         hComp,
                 //access only in IL client context
                 DEBUG_PRINT("Free_Buf:out_buffer[%p]\n",buffer);
                 m_output_buf_hdrs.erase(buffer);
-                if (m_is_alloc_buf)
-                {
-                    free(buffer);
-                }
+                free(buffer);
                 m_out_current_buf_count--;
             } else
             {
@@ -3863,7 +3855,6 @@ OMX_ERRORTYPE  omx_amr_aenc::free_buffer(OMX_IN OMX_HANDLETYPE         hComp,
             else
                DEBUG_PRINT("AUDIO STOP in free buffer passed\n");
 
-            m_is_alloc_buf = 0;
 
             DEBUG_PRINT("Free_Buf: Free buffer\n");
 
@@ -4329,7 +4320,6 @@ void  omx_amr_aenc::deinit_encoder()
     }
     nNumInputBuf = 0;
     nNumOutputBuf = 0;
-    m_is_alloc_buf = 0;
     bFlushinprogress = 0;
 
     m_inp_current_buf_count=0;

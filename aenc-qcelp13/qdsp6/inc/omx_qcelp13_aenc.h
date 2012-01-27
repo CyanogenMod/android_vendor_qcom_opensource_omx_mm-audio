@@ -367,7 +367,6 @@ private:
     OMX_U8                         m_comp_deinit;
 
     // the below var doesnt hold good if combo of use and alloc bufs are used
-    OMX_U8                         m_is_alloc_buf;
     OMX_S32                        m_volume;//Unit to be determined
     OMX_PTR                        m_app_data;// Application data
     int                            nNumInputBuf;
