@@ -24,7 +24,8 @@ endif
 include $(CLEAR_VARS)
 
 libOmxAmrEnc-inc       := $(LOCAL_PATH)/inc
-libOmxAmrEnc-inc       += $(TARGET_OUT_HEADERS)/mm-core/omxcore
+libOmxAmrEnc-inc       += $(TARGET_OUT_HEADERS)/mm-core/omxcore \
+	                      $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 
 LOCAL_MODULE            := libOmxAmrEnc
 LOCAL_MODULE_TAGS       := optional
